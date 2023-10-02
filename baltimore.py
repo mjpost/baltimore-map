@@ -1,4 +1,4 @@
-#!/urs/bin/env python3
+#!/usr/bin/env python3
 
 import osmnx as ox
 import gpxpy
@@ -14,6 +14,14 @@ import matplotlib.pyplot as plt
 ox.settings.log_console = True
 ox.settings.use_cache = True
 print(ox.__version__)
+
+lat_lon_dist = namedtuple('lat_lon_dist', ['y', 'x'])
+
+# one mile in latitude, longitude degrees
+one_mile = lat_lon_dist(0.0144927536231884, 0.0181818181818182)
+
+# one km in latitude, longitude degrees
+one_km = lat_lon_dist(0.008983, 0.0113636)
 
 
 def main(args):
@@ -67,7 +75,7 @@ def main(args):
     # tags = {'boundaries': "administrative", "admin_level": "10"}
     # gdf_neighborhoods = ox.features.features_from_place(place, tags=tags)
     # load geojson file
-    gdf_neighborhoods = gpd.read_file("data/Baltimore Neighborhoods.geojson")
+    gdf_neighborhoods = gpd.read_file("data/Baltimore.geojson")
     gdf_neighborhoods["color"] = bg_color
     gdf_neighborhoods.crs = common_crs
 
@@ -90,14 +98,6 @@ def main(args):
 
     ## Baltimore map
     fig, ax = plt.subplots(figsize=(24,36))
-
-    lat_lon_dist = namedtuple('lat_lon_dist', ['y', 'x'])
-
-    # one mile in latitude, longitude degrees
-    one_mile = lat_lon_dist(0.0144927536231884, 0.0181818181818182)
-
-    # one km in latitude, longitude degrees
-    one_km = lat_lon_dist(0.008983, 0.0113636)
 
     ax.set_xlim(gdf_streets.total_bounds[0] - one_km.x, gdf_streets.total_bounds[2] + one_km.x)
     ax.set_ylim(gdf_streets.total_bounds[1] - one_km.y * 1.5, gdf_streets.total_bounds[3] + one_km.y * 0.75)
@@ -139,17 +139,17 @@ def main(args):
     font_color = "#aaaaaa"
 
     # BALTIMORE
-    # ax.text(
-    #     s="Baltimore",
-    #     x=gdf_neighborhoods.total_bounds[0],
-    #     y=gdf_neighborhoods.total_bounds[1] - 0.003,  # + (gdf_streets.total_bounds[3] - gdf_streets.total_bounds[1]) * 0.25,
-    #     fontsize=144,
-    #     color=font_color,
-    #     weight="bold",
-    #     verticalalignment="bottom",
-    #     horizontalalignment="left",
-    #     name="Avenir Next",
-    # )
+    ax.text(
+        s="Baltimore",
+        x=gdf_neighborhoods.total_bounds[0],
+        y=gdf_neighborhoods.total_bounds[1] - 0.003,  # + (gdf_streets.total_bounds[3] - gdf_streets.total_bounds[1]) * 0.25,
+        fontsize=144,
+        color=font_color,
+        weight="bold",
+        verticalalignment="bottom",
+        horizontalalignment="left",
+        name="Phosphate",
+    )
 
     # # NEIGHBORHOODS 2023
     # ax.text(
@@ -164,10 +164,54 @@ def main(args):
     #     name="Avenir Next Condensed",
     # )
 
-    ##
-    ## LEGEND
-    ##
-def draw_legend(x, y):
+    # draw_compass(-76.6660, 39.2480)
+    # draw_scale_patch(-76.673, 39.2319)
+    # draw_legend(-76.709, 39.2319)
+
+    offsets = {
+        "Holabird Industrial Park": (0, +0.003),
+        "Locust Point Industrial Area": (0.001, -0.0035),
+        "Penrose/Fayette Street Outreach": (0, +0.0005),
+        "Keswick": (-0.001, 0),
+        "Loyola/Notre Dame": (+0.002, 0),
+        "Irvington": (0, +0.002),
+        "West Forest Park": (0, +0.001),
+        "Purnell": (0, +0.0005),
+    }
+
+    names = {
+        "Carroll - Camden Industrial Area": "Carroll-\nCamden\nIndustrial\nArea",
+        "Penrose/Fayette Street Outreach": "Penrose/Fayette\nStreet Outreach",
+        "Coppin Heights/Ash-Co-East": "Coppin Heights/\nAsh-Co-East",
+        "Concerned Citizens of Forest Park": "Concerned\nCitizens\nof Forest\nPark",
+    }
+
+    def munge(name: str):
+        munged_name = names.get(name, name.replace(" ", "\n").replace("/","/\n").replace("-","-\n"))
+        return munged_name.upper()
+
+    # Print the name of each neighborhood on the map
+    for idx, row in gdf_neighborhoods.iterrows():
+        x = row["geometry"].centroid.x + offsets.get(row["Name"], (0, 0))[0]
+        y = row["geometry"].centroid.y + offsets.get(row["Name"], (0, 0))[1]
+
+    ax.annotate(
+        text=munge(row["Name"]),
+        xy=(x, y),
+        horizontalalignment="center",
+        verticalalignment="center",
+        fontsize=6.5,
+        color="#999999",
+        weight="bold",
+        # name="Avenir Next Condensed",
+        name="Phosphate",
+    )
+
+    plt.savefig(f"{placename}.pdf", dpi=300)
+
+
+def draw_legend(ax, x, y):
+
     wx = one_km.x / 3
     wy = one_km.y / 3
 
@@ -258,10 +302,8 @@ def draw_legend(x, y):
         name="Avenir Next Condensed",
     )
 
-    ##
-    ## SCALE
-    ##
-    def draw_scale_patch(x, y):
+
+def draw_scale_patch(ax, x, y):
     ax.add_patch(
         plt.Rectangle(
             xy=(x, y),
@@ -287,7 +329,7 @@ def draw_legend(x, y):
     ##
     ## COMPASS
     ##
-    def draw_compass(x, y):
+def draw_compass(ax, x, y):
     # Draw an arrow pointing north, with a fancy N above it
     ax.text(
         s="N",
@@ -313,49 +355,6 @@ def draw_legend(x, y):
         alpha=0.5,
     )
 
-    # draw_compass(-76.6660, 39.2480)
-    # draw_scale_patch(-76.673, 39.2319)
-    # draw_legend(-76.709, 39.2319)
-
-    offsets = {
-        "Holabird Industrial Park": (0, +0.003),
-        "Locust Point Industrial Area": (0.001, -0.0035),
-        "Penrose/Fayette Street Outreach": (0, +0.0005),
-        "Keswick": (-0.001, 0),
-        "Loyola/Notre Dame": (+0.002, 0),
-        "Irvington": (0, +0.002),
-        "West Forest Park": (0, +0.001),
-        "Purnell": (0, +0.0005),
-    }
-
-    names = {
-        "Carroll - Camden Industrial Area": "Carroll-\nCamden\nIndustrial\nArea",
-        "Penrose/Fayette Street Outreach": "Penrose/Fayette\nStreet Outreach",
-        "Coppin Heights/Ash-Co-East": "Coppin Heights/\nAsh-Co-East",
-        "Concerned Citizens of Forest Park": "Concerned\nCitizens\nof Forest\nPark",
-    }
-
-    def munge(name: str):
-        munged_name = names.get(name, name.replace(" ", "\n").replace("/","/\n").replace("-","-\n"))
-        return munged_name.upper()
-
-    # Print the name of each neighborhood on the map
-    for idx, row in gdf_neighborhoods.iterrows():
-    x = row["geometry"].centroid.x + offsets.get(row["Name"], (0, 0))[0]
-    y = row["geometry"].centroid.y + offsets.get(row["Name"], (0, 0))[1]
-
-    ax.annotate(
-        text=munge(row["Name"]),
-        xy=(x, y),
-        horizontalalignment="center",
-        verticalalignment="center",
-        fontsize=6.5,
-        color="#999999",
-        weight="bold",
-        name="Avenir Next Condensed",
-    )
-
-    plt.savefig(f"{placename}.pdf", dpi=300, bbox_inches='tight')
 
 if __name__ == "__main__":
     import argparse
@@ -363,4 +362,4 @@ if __name__ == "__main__":
     parser.add_argument("--place", "-p", help="City on earth", default="Baltimore, MD, USA")
     args = parser.parse_args()
 
-    main()
+    main(args)
