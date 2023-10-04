@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import random
 import osmnx as ox
 import gpxpy
 import geopandas as gpd
@@ -49,6 +50,8 @@ def main(args):
     street_color = "#cccccc"
     cemetery_gray = "#666666"
     park_green = "#b2df8a"
+
+    # define a good RGB blue for water
     water_blue = "#a6cee3"
 
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
@@ -79,8 +82,17 @@ def main(args):
     # gdf_neighborhoods = ox.features.features_from_place(place, tags=tags)
     # load geojson file
     gdf_neighborhoods = gpd.read_file("data/Baltimore.geojson")
-    gdf_neighborhoods["color"] = bg_color
+    # gdf_neighborhoods["color"] = bg_color
     gdf_neighborhoods.crs = common_crs
+
+    # randomly assign one these colors to each neighborhood
+    random.seed(14)
+    # city_mosaic = ["red", "orange", "teal", "yellow", "pink", "purple"]
+    city_mosaic = ["#f23b33", "#f7693d", "#a0cce8", "#e1ed6a", "#f37196", "#8d649e"]
+    gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(city_mosaic), axis=1)
+
+    # choose a random color for each city neightborhood
+    # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
 
     # load points from a csv file, create a GDF
     # df = pd.read_csv("data/ghost.csv")
@@ -133,13 +145,13 @@ def main(args):
         spine.set_visible(False)
 
     # use a dashed line for the axis grid
+    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="-", ec="orange", linewidth=2, alpha=0.5)
     gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
-    gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=0.5)
-    gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=1.2, alpha=0.3)
+    gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=1)
+    gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=1.2, alpha=1)
     gdf_buildings.plot(ax=ax, facecolor=cemetery_gray, linewidth=1.2, alpha=0.3)
     # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
     # gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="--", ec="orange", linewidth=1.5, alpha=1)
-    gdf_neighborhoods.plot(ax=ax, facecolor="none", linestyle="--", ec="orange", linewidth=1.5, alpha=1)
 
     # plot each point in gdf_ghost with bike-14.png as an icon
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color="black", alpha=1)
@@ -392,6 +404,7 @@ def draw_compass(ax, x, y):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument("--seed", default=14, type=int, help="Random seed")
     args = parser.parse_args()
 
     main(args)
