@@ -98,12 +98,6 @@ def main(args):
     gdf_drinking_fountains = ox.features.features_from_place(place, tags=tags)
     gdf_drinking_fountains.crs = common_crs
 
-    # print(gdf_park)
-
-    # remove all rows that are not polygons
-    # gdf_neighborhoods = gdf_neighborhoods[gdf_neighborhoods["geometry"].apply(lambda x: x.type == "Polygon")]
-    # gdf_neighborhoods.to_csv("baltimore.csv")
-
     ## Baltimore map
     fig, ax = plt.subplots(figsize=(36,48), dpi=300)
     fig.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9)
@@ -112,7 +106,6 @@ def main(args):
                 gdf_neighborhoods.total_bounds[2] + one_km.x * 0.5)
     ax.set_ylim(gdf_neighborhoods.total_bounds[1] - one_km.y * 0.5, 
                 gdf_neighborhoods.total_bounds[3] + one_km.y * 0.5)
-
 
     grid_color = "#cccccc"
 
@@ -143,15 +136,10 @@ def main(args):
 
     # gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=1)
     gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1.5, alpha=1)
-    gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=1, alpha=1)
-    # gdf_buildings.plot(ax=ax, facecolor=cemetery_gray, linewidth=1.2, alpha=0.3)
-    # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
-    # gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="--", ec="orange", linewidth=1.5, alpha=1)
+    gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=0, alpha=1)
 
     # plot each point in gdf_ghost with bike-14.png as an icon
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color="black", alpha=1)
-
-    font_color = "#aaaaaa"
 
     # BALTIMORE city name
     add_title(ax, gdf_neighborhoods)

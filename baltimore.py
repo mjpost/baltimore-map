@@ -7,7 +7,8 @@ import geopandas as gpd
 import gpxpy.gpx
 import pandas as pd
 
-from collections import namedtuple
+from common import *
+
 import matplotlib.pyplot as plt
 
 
@@ -16,14 +17,6 @@ ox.settings.log_console = True
 ox.settings.use_cache = True
 print(ox.__version__)
 
-lat_lon_dist = namedtuple('lat_lon_dist', ['y', 'x'])
-
-# one mile in latitude, longitude degrees
-one_mile = lat_lon_dist(0.0144927536231884, 0.0181818181818182)
-
-# one km in latitude, longitude degrees
-one_km = lat_lon_dist(0.008983, 0.0113636)
-
 
 def main(args):
     place = "Baltimore, MD"
@@ -31,13 +24,7 @@ def main(args):
     # Define a common CRS for both GeoDataFrames (replace with your desired CRS)
     common_crs = 'EPSG:4326'
 
-    G = ox.graph_from_place(place, network_type="drive")
-    # fig, ax = ox.plot_graph(G,
-    #     # bgcolor="#333333",
-    #     edge_color="white",
-    #     edge_linewidth=0.1,
-    #     node_size=0,
-    # )
+    G = ox.graph_from_place(place, network_type="all_private")
 
     gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=True, fill_edge_geometry=True)
     gdf_streets = gdf_streets.to_crs(common_crs)
@@ -145,7 +132,7 @@ def main(args):
         spine.set_visible(False)
 
     # use a dashed line for the axis grid
-    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="-", ec="orange", linewidth=2, alpha=0.5)
+    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="-", ec="black", linewidth=0, alpha=1)
     gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
     gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=1)
     gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=1.2, alpha=1)
@@ -188,28 +175,6 @@ def main(args):
     # draw_compass(-76.6660, 39.2480)
     # draw_scale_patch(-76.673, 39.2319)
     # draw_legend(-76.709, 39.2319)
-
-    offsets = {
-        "Holabird Industrial Park": (0, +0.003),
-        "Locust Point Industrial Area": (0.001, -0.0035),
-        "Penrose/Fayette Street Outreach": (0, +0.0005),
-        "Keswick": (-0.001, 0),
-        "Loyola/Notre Dame": (+0.002, 0),
-        "Irvington": (0, +0.002),
-        "West Forest Park": (0, +0.001),
-        "Purnell": (0, +0.0005),
-    }
-
-    names = {
-        "Carroll - Camden Industrial Area": "Carroll-\nCamden\nIndustrial\nArea",
-        "Penrose/Fayette Street Outreach": "Penrose/Fayette\nStreet Outreach",
-        "Coppin Heights/Ash-Co-East": "Coppin Heights/\nAsh-Co-East",
-        "Concerned Citizens of Forest Park": "Concerned\nCitizens\nof Forest\nPark",
-    }
-
-    def munge(name: str):
-        munged_name = names.get(name, name.replace(" ", "\n").replace("/","/\n").replace("-","-\n"))
-        return munged_name.upper()
 
     # Print the name of each neighborhood on the map
     for idx, row in gdf_neighborhoods.iterrows():
