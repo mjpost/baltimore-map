@@ -39,7 +39,7 @@ def main(args):
     park_green = "#b2df8a"
 
     # define a good RGB blue for water
-    water_blue = "#a6cee3"
+    water_blue = city_colors["blue"]
 
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
     tags = {"natural": "water"}
@@ -73,10 +73,8 @@ def main(args):
     gdf_neighborhoods.crs = common_crs
 
     # randomly assign one these colors to each neighborhood
-    random.seed(14)
-    # city_mosaic = ["red", "orange", "teal", "yellow", "pink", "purple"]
-    city_mosaic = ["#f23b33", "#f7693d", "#a0cce8", "#e1ed6a", "#f37196", "#8d649e"]
-    gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(city_mosaic), axis=1)
+    random.seed(args.seed)
+    gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(list(city_colors.values())), axis=1)
 
     # choose a random color for each city neightborhood
     # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
@@ -132,11 +130,15 @@ def main(args):
         spine.set_visible(False)
 
     # use a dashed line for the axis grid
-    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="-", ec="black", linewidth=0, alpha=1)
-    gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
-    gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=1)
-    gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=1.2, alpha=1)
-    gdf_buildings.plot(ax=ax, facecolor=cemetery_gray, linewidth=1.2, alpha=0.3)
+    # gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="-", ec="black", linewidth=2, alpha=1)
+    gdf_neighborhoods.plot(ax=ax, facecolor="white", linestyle="-", ec="black", linewidth=2, alpha=1)
+
+    # gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
+
+    # gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=1)
+    gdf_water.plot(ax=ax, facecolor=water_blue, ec="black", linewidth=1, alpha=1)
+    gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=1, alpha=1)
+    # gdf_buildings.plot(ax=ax, facecolor=cemetery_gray, linewidth=1.2, alpha=0.3)
     # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
     # gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="--", ec="orange", linewidth=1.5, alpha=1)
 
@@ -186,8 +188,8 @@ def main(args):
             xy=(x, y),
             horizontalalignment="center",
             verticalalignment="center",
-            fontsize=6.5,
-            color="#999999",
+            fontsize=7,
+            color="black",
             weight="bold",
             name="Avenir Next Condensed",
             # name="Phosphate",
@@ -221,149 +223,6 @@ def main(args):
             )
 
     plt.savefig(f"{placename}.pdf", dpi=300)
-
-
-def draw_legend(ax, x, y):
-    wx = one_km.x / 3
-    wy = one_km.y / 3
-
-    # a square for the parks
-    ax.add_patch(
-        plt.Rectangle(
-            xy=(x, y),
-            width=wx,
-            height=wy,
-            linewidth=1,
-            color=park_green,
-            fill=True,
-            ec="#333333",
-            alpha=0.5,
-        )
-    )
-    # and for the water
-    ax.add_patch(
-        plt.Rectangle(
-            xy=(x, y + wy * 1.25),
-            width=wx,
-            height=wy,
-            linewidth=1,
-            color=water_blue,
-            fill=True,
-            ec="#333333",
-            alpha=0.5,
-        )
-    )
-    # draw a small gray square just above that
-    ax.add_patch(
-        plt.Rectangle(
-            xy=(x, y + wy * 2.5),
-            width=wx,
-            height=wy,
-            linewidth=1,
-            color=cemetery_gray,
-            fill=True,
-            ec="#333333",
-            alpha=0.5,
-        )
-    )
-    # plot a single point
-    ax.plot(
-        x,
-        y + wy * 3.75,
-        marker="X",
-        markersize=10,
-        color="black",
-        alpha=1,
-    )
-    # border
-    ax.add_patch(
-        plt.Rectangle(
-            xy=(x, y + wy * 5),
-            width=wx,
-            height=wy/5,
-            linewidth=1,
-            color="orange",
-            fill=True,
-            # ec="#333333",
-            alpha=0.5,
-        )
-    )
-    # street
-    ax.add_patch(
-        plt.Rectangle(
-            xy=(x, y + wy * 6.25),
-            width=wx,
-            height=wy/5,
-            linewidth=1,
-            color=street_color,
-            fill=True,
-            # ec="#333333",
-            alpha=0.5,
-        )
-    )
-
-    ax.text(
-        s="Park",
-        x=x + wx * 1.5,
-        y=y,
-        fontsize=12,
-        color="black",
-        verticalalignment="bottom",
-        horizontalalignment="left",
-        weight="light",
-        name="Avenir Next Condensed",
-    )
-
-
-def draw_scale_patch(ax, x, y):
-    ax.add_patch(
-        plt.Rectangle(
-            xy=(x, y),
-            width=one_mile.x,
-            height=one_mile.y,
-            linewidth=2,
-            color="#aaaaaa",
-            fill=False,
-        )
-    )
-    ax.text(
-        s="one\nsquare\nmile",
-        x=x + one_mile.x / 2,
-        y=y + one_mile.y / 2,
-        fontsize=14,
-        color=font_color,
-        weight="bold",
-        verticalalignment="center",
-        horizontalalignment="center",
-        name="Avenir Next",
-    )
-
-
-def draw_compass(ax, x, y):
-    # Draw an arrow pointing north, with a fancy N above it
-    ax.text(
-        s="N",
-        x=-76.6660,
-        y=39.2480,
-        fontsize=28,
-        color="#666666",
-        weight="bold",
-        verticalalignment="bottom",
-        horizontalalignment="center",
-        name="Apple Chancery",
-    )
-    # next draw a little tiny red triangle above the N
-    ax.arrow(
-        x=-76.6655,
-        y=39.2480,
-        dx=0,
-        dy=0.005,
-        head_width=0.0025,
-        head_length=0.0010,
-        fc="orange",
-        ec="orange",
-        alpha=0.5,
-    )
 
 
 if __name__ == "__main__":

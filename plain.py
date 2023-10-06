@@ -161,33 +161,6 @@ def main(args):
             # name="Phosphate",
         )
 
-    # for every relation in parks, print the name in the middle of it
-    if False:
-        park_count = 0
-        for idx, row in gdf_park.iterrows():
-            name = row["name"]
-
-            if name == "" or name is float:
-                continue
-
-            park_count += 1
-
-            x = row["geometry"].centroid.x
-            y = row["geometry"].centroid.y
-
-            print(park_count, "PARK", name, x, y)
-
-            ax.annotate(
-                text=row["name"],
-                xy=(x, y),
-                horizontalalignment="center",
-                verticalalignment="center",
-                fontsize=6.5,
-                color="#999999",
-                style="italic",
-                name="Avenir Next Condensed",
-            )
-
     plt.savefig(f"{placename}-plain.pdf", dpi=300)
 
 

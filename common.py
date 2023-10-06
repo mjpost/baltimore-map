@@ -43,9 +43,9 @@ def munge(name: str):
     munged_name = names.get(name, name.replace(" ", "\n").replace("/","/\n").replace("-","-\n"))
     return munged_name.upper()
 
-def add_title(ax, gdf_neighborhoods):
+def add_title(ax, gdf_neighborhoods, place="Baltimore"):
     ax.text(
-        s="BALTIMORE",
+        s=place.upper(),
         x=gdf_neighborhoods.total_bounds[0],
         y=gdf_neighborhoods.total_bounds[1] - one_km.y,
         fontsize=220,
@@ -56,15 +56,16 @@ def add_title(ax, gdf_neighborhoods):
         name="Avenir Next",
     )
 
-    # NEIGHBORHOODS 2023
-    ax.text(
-        s="NEIGHBORHOODS 2023",
-        x=-76.6625,
-        y=39.2040,
-        fontsize=80,
-        color="black",
-        weight=50,
-        verticalalignment="bottom",
-        horizontalalignment="left",
-        name="Avenir Next Condensed",
-    )
+    if place.lower().startswith("baltimore"):
+        # NEIGHBORHOODS 2023
+        ax.text(
+            s="NEIGHBORHOODS 2023",
+            x=-76.6625,
+            y=39.2040,
+            fontsize=80,
+            color="black",
+            weight=50,
+            verticalalignment="bottom",
+            horizontalalignment="left",
+            name="Avenir Next Condensed",
+        )
