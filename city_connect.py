@@ -2,10 +2,11 @@
 
 import random
 import osmnx as ox
-import gpxpy
 import geopandas as gpd
+import networkx as nx
 import gpxpy.gpx
 import pandas as pd
+import sys
 
 from common import *
 
@@ -17,6 +18,8 @@ ox.settings.log_console = True
 ox.settings.use_cache = True
 print(ox.__version__)
 
+from shapely.geometry import MultiPolygon
+
 
 def main(args):
     place = "Baltimore, MD"
@@ -24,6 +27,7 @@ def main(args):
     # Define a common CRS for both GeoDataFrames (replace with your desired CRS)
     common_crs = 'EPSG:4326'
 
+    print(f"Setting seed to {args.seed}")
     random.seed(args.seed)
 
     # G = ox.graph_from_place(place, network_type="all_private")
@@ -42,6 +46,8 @@ def main(args):
     # define a good RGB blue for water
     water_blue = city_colors["blue"]
 
+    # del city_colors["blue"]
+
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
     tags = {"natural": "water"}
     gdf_water = ox.features.features_from_place(place, tags=tags)
@@ -55,20 +61,41 @@ def main(args):
     gdf_park = gdf_park[gdf_park["geometry"].apply(lambda x: x.geom_type != "Point")]
     gdf_park.crs = common_crs
 
-    # write to disk
-    gdf_park.to_csv("baltimore_parks.csv")
-
-    # tags = {'boundaries': "administrative", "admin_level": "10"}
-    # gdf_neighborhoods = ox.features.features_from_place(place, tags=tags)
     # load geojson file
     gdf_neighborhoods = gpd.read_file("data/Baltimore.geojson")
     # gdf_neighborhoods["color"] = bg_color
     gdf_neighborhoods.crs = common_crs
 
-    # randomly assign one these colors to each neighborhood
-    random.seed(14)
+    # Create a graph from the GeoDataFrame
+    G = nx.Graph()
+    for index, row in gdf_neighborhoods.iterrows():
+        G.add_node(index, geometry=row['geometry'])
+    
+    for index1, row1 in gdf_neighborhoods.iterrows():
+        geo1 = row1["geometry"]
+        for index2, row2 in gdf_neighborhoods.iterrows():
+            geo2 = row2["geometry"]
+            if index1 != index2 and geo1.distance(geo2) < 0.00001:
+                # print(row1["Name"], "<>", row2["Name"], geo1.distance(geo2))
+                G.add_edge(index1, index2)
 
-    gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(list(city_colors.values())), axis=1)
+    # dump G to disk as TSV
+    # nx.write_edgelist(G, f"{placename}-cityconnect.tsv", delimiter="\t")
+
+    # Perform graph coloring
+    coloring = nx.coloring.greedy_color(G, strategy="largest_first")
+
+    # Map colors back to GeoDataFrame
+    colors = list(city_colors.values())
+    gdf_neighborhoods['color'] = [colors[coloring[i]] for i in range(len(gdf_neighborhoods))]
+
+    for i, row in gdf_neighborhoods.iterrows():
+        print(row["Name"], row["color"])
+
+    # # Plot
+    # gdf.plot(column='color', cmap="tab10")
+
+    # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(list(city_colors.values())), axis=1)
 
     # choose a random color for each city neightborhood
     # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
@@ -96,7 +123,6 @@ def main(args):
                 gdf_neighborhoods.total_bounds[2] + one_km.x * 0.5)
     ax.set_ylim(gdf_neighborhoods.total_bounds[1] - one_km.y * 0.5, 
                 gdf_neighborhoods.total_bounds[3] + one_km.y * 0.5)
-
 
     ax.set_axis_off()
 
