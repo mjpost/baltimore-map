@@ -21,17 +21,11 @@ print(ox.__version__)
 def main(args):
     place = "Baltimore, MD"
     placename = place.split(',')[0].replace(" ", "").lower()
-    # Define a common CRS for both GeoDataFrames (replace with your desired CRS)
-    common_crs = 'EPSG:4326'
 
     G = ox.graph_from_place(place, network_type="all_private")
 
     gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=True, fill_edge_geometry=True)
     gdf_streets = gdf_streets.to_crs(common_crs)
-
-    # get all parks from the OSM database
-    # tags = {'natural': 'water', 'boundaries': "administrative", "admin_level": "9", 'leisure': ["garden"]}
-    # tags = {'boundaries': "administrative", "admin_level": "10", "natural": "water"}  # , "leisure": ["park", "garden"]}
 
     bg_color = "white"  # "#e0e0e0"
     street_color = "#cccccc"
@@ -52,9 +46,8 @@ def main(args):
     # tags = {"building": "school"}
     # cemeteries!
     tags = {"landuse": "cemetery"}
-    gdf_buildings = ox.features.features_from_place(place, tags=tags)
-    gdf_buildings.crs = common_crs
-    # use a spooky gray for those
+    gdf_cemetery = ox.features.features_from_place(place, tags=tags)
+    gdf_cemetery.crs = common_crs
 
     tags = {"leisure": ["park", "garden"]}
     gdf_park = ox.features.features_from_place(place, tags=tags)
@@ -79,9 +72,6 @@ def main(args):
     # choose a random color for each city neightborhood
     # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
 
-    # load points from a csv file, create a GDF
-    # df = pd.read_csv("data/ghost.csv")
-    # gdf_ghost = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat))
     tags = {"memorial": "ghost_bike"}
     gdf_ghost = ox.features.features_from_place(place, tags=tags)
     gdf_ghost.crs = common_crs
@@ -90,23 +80,13 @@ def main(args):
     gdf_drinking_fountains = ox.features.features_from_place(place, tags=tags)
     gdf_drinking_fountains.crs = common_crs
 
-    # print(gdf_park)
-
-    # remove all rows that are not polygons
-    # gdf_neighborhoods = gdf_neighborhoods[gdf_neighborhoods["geometry"].apply(lambda x: x.type == "Polygon")]
-    # gdf_neighborhoods.to_csv("baltimore.csv")
-
     ## Baltimore map
     fig, ax = plt.subplots(figsize=(36,48), dpi=300)
-
-    # ax.set_xlim(gdf_streets.total_bounds[0] - one_km.x, gdf_streets.total_bounds[2] + one_km.x)
-    # ax.set_ylim(gdf_streets.total_bounds[1] - one_km.y * 1.5, gdf_streets.total_bounds[3] + one_km.y * 0.75)
 
     ax.set_xlim(gdf_neighborhoods.total_bounds[0] - one_km.x * 0.5, 
                 gdf_neighborhoods.total_bounds[2] + one_km.x * 0.5)
     ax.set_ylim(gdf_neighborhoods.total_bounds[1] - one_km.y * 0.5, 
                 gdf_neighborhoods.total_bounds[3] + one_km.y * 0.5)
-
 
     grid_color = "#cccccc"
 
@@ -133,50 +113,19 @@ def main(args):
     # gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="-", ec="black", linewidth=2, alpha=1)
     gdf_neighborhoods.plot(ax=ax, facecolor="white", linestyle="-", ec="black", linewidth=2, alpha=1)
 
-    # gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
+    gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
 
     # gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=1)
-    gdf_water.plot(ax=ax, facecolor=water_blue, ec="black", linewidth=1, alpha=1)
-    gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=1, alpha=1)
-    # gdf_buildings.plot(ax=ax, facecolor=cemetery_gray, linewidth=1.2, alpha=0.3)
-    # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
-    # gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="--", ec="orange", linewidth=1.5, alpha=1)
+    gdf_water.plot(ax=ax, facecolor=water_blue, ec="black", linewidth=0, alpha=1)
+    gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=0, alpha=1)
+    gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, linewidth=0, alpha=0.3)
 
     # plot each point in gdf_ghost with bike-14.png as an icon
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color="black", alpha=1)
 
     font_color = "#aaaaaa"
 
-    # BALTIMORE city name
-    if False:
-        ax.text(
-            s="Baltimore",
-            x=gdf_neighborhoods.total_bounds[0],
-            y=gdf_neighborhoods.total_bounds[1] - 0.003,  # + (gdf_streets.total_bounds[3] - gdf_streets.total_bounds[1]) * 0.25,
-            fontsize=144,
-            color=font_color,
-            weight="bold",
-            verticalalignment="bottom",
-            horizontalalignment="left",
-            name="Phosphate",
-        )
-
-    # # NEIGHBORHOODS 2023
-    # ax.text(
-    #     s="Neighborhoods 2023",
-    #     x=-76.6500,
-    #     y=39.2075,
-    #     fontsize=30,
-    #     color=font_color,
-    #     weight="bold",
-    #     verticalalignment="bottom",
-    #     horizontalalignment="left",
-    #     name="Avenir Next Condensed",
-    # )
-
-    # draw_compass(-76.6660, 39.2480)
-    # draw_scale_patch(-76.673, 39.2319)
-    # draw_legend(-76.709, 39.2319)
+    add_title(ax, gdf_neighborhoods, place="Baltimore")
 
     # Print the name of each neighborhood on the map
     for idx, row in gdf_neighborhoods.iterrows():
@@ -195,40 +144,12 @@ def main(args):
             # name="Phosphate",
         )
 
-    # for every relation in parks, print the name in the middle of it
-    if False:
-        park_count = 0
-        for idx, row in gdf_park.iterrows():
-            name = row["name"]
-
-            if name == "" or name is float:
-                continue
-
-            park_count += 1
-
-            x = row["geometry"].centroid.x
-            y = row["geometry"].centroid.y
-
-            print(park_count, "PARK", name, x, y)
-
-            ax.annotate(
-                text=row["name"],
-                xy=(x, y),
-                horizontalalignment="center",
-                verticalalignment="center",
-                fontsize=6.5,
-                color="#999999",
-                style="italic",
-                name="Avenir Next Condensed",
-            )
-
     plt.savefig(f"{placename}.pdf", dpi=300)
 
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", default=14, type=int, help="Random seed")
     args = parser.parse_args()
 
     main(args)
