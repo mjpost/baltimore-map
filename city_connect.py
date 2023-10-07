@@ -38,15 +38,15 @@ def main(args):
     # tags = {'natural': 'water', 'boundaries': "administrative", "admin_level": "9", 'leisure': ["garden"]}
     # tags = {'boundaries': "administrative", "admin_level": "10", "natural": "water"}  # , "leisure": ["park", "garden"]}
 
-    bg_color = "white"  # "#e0e0e0"
+    bg_color = "#333333"  # "#e0e0e0"
+    light_gray = "#cccccc"
     street_color = "#cccccc"
     cemetery_gray = "#666666"
+
     park_green = random.choice(list(city_colors.values()))  # "#b2df8a"
 
     # define a good RGB blue for water
     water_blue = city_colors["blue"]
-
-    # del city_colors["blue"]
 
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
     tags = {"natural": "water"}
@@ -54,6 +54,9 @@ def main(args):
     # anything with a "natural" column value of "water" should be a nice sea blue
     gdf_water.loc[gdf_water["natural"] == "water", "color"] = water_blue
     gdf_water.crs = common_crs
+
+    # concatenate gdfs
+    # gdf = pd.concat([gdf_streets, gdf_water], ignore_index=True)
 
     tags = {"leisure": ["park", "garden"]}
     gdf_park = ox.features.features_from_place(place, tags=tags)
@@ -86,11 +89,16 @@ def main(args):
     coloring = nx.coloring.greedy_color(G, strategy="largest_first")
 
     # Map colors back to GeoDataFrame
-    colors = list(city_colors.values())
-    gdf_neighborhoods['color'] = [colors[coloring[i]] for i in range(len(gdf_neighborhoods))]
+    gdf_neighborhoods["color"] = bg_color
 
-    for i, row in gdf_neighborhoods.iterrows():
-        print(row["Name"], row["color"])
+    colors = [city_colors[x] for x in "red orange pink purple yellow blue".split()]
+    for i in range(len(gdf_neighborhoods)):
+        if random.random() <= args.color_prob:
+            gdf_neighborhoods.loc[i, "color"] = colors[coloring[i]]
+        # gdf_neighborhoods['color'] = [colors[coloring[i]] for i in range(len(gdf_neighborhoods))]
+
+    # for i, row in gdf_neighborhoods.iterrows():
+    #     print(row["Name"], row["color"])
 
     # # Plot
     # gdf.plot(column='color', cmap="tab10")
@@ -126,12 +134,14 @@ def main(args):
 
     ax.set_axis_off()
 
+    ax.set_facecolor(bg_color)
+
     # turn off the axis perimeter line
     for spine in ax.spines.values():
         spine.set_visible(False)
 
     # use a dashed line for the axis grid
-    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="-", ec="black", linewidth=0.5, alpha=1)
+    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="-", ec=light_gray, linewidth=0.5, alpha=1)
     # gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
     gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=1)
     # gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=1.2, alpha=1)
@@ -142,29 +152,32 @@ def main(args):
     # gdf_ghost.plot(ax=ax, marker="X", markersize=50, color="black", alpha=1)
 
     # Print the name of each neighborhood on the map
-    for idx, row in gdf_neighborhoods.iterrows():
-        x = row["geometry"].centroid.x + offsets.get(row["Name"], (0, 0))[0]
-        y = row["geometry"].centroid.y + offsets.get(row["Name"], (0, 0))[1]
+    if args.print_names:
+        for idx, row in gdf_neighborhoods.iterrows():
+            x = row["geometry"].centroid.x + offsets.get(row["Name"], (0, 0))[0]
+            y = row["geometry"].centroid.y + offsets.get(row["Name"], (0, 0))[1]
 
-        ax.annotate(
-            text=munge(row["Name"]),
-            xy=(x, y),
-            horizontalalignment="center",
-            verticalalignment="center",
-            fontsize=8,
-            color="black",
-            weight="bold",
-            name="Avenir Next Condensed",
-            # name="Phosphate",
-        )    
+            ax.annotate(
+                text=munge(row["Name"]),
+                xy=(x, y),
+                horizontalalignment="center",
+                verticalalignment="center",
+                fontsize=8,
+                color="black",
+                weight="bold",
+                name="Avenir Next Condensed",
+                # name="Phosphate",
+            )    
 
-    plt.savefig(f"{placename}-cityconnect.pdf", dpi=300)
+    plt.savefig(f"{placename}-cityconnect.pdf", dpi=300, facecolor=bg_color)
 
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", default=14, type=int, help="Random seed")
+    parser.add_argument("--print-names", action="store_true", help="Print neighborhood names")
+    parser.add_argument("--color-prob", default=1.0, type=float, help="Probability of coloring a neighborhood")
     args = parser.parse_args()
 
     main(args)

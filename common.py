@@ -15,10 +15,10 @@ common_crs = 'EPSG:4326'
 city_colors = {
     "red": "#f23b33",
     "orange": "#f7693d",
-    "blue": "#a0cce8",
     "yellow": "#FCEA65",  # "#fefc78",
     "pink": "#f37196",
     "purple": "#8d649e",
+    "blue": "#a0cce8",
 }
 
 offsets = {
