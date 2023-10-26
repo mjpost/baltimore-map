@@ -31,8 +31,7 @@ def main(args):
     street_color = "#cccccc"
     cemetery_gray = "#666666"
     park_green = "#b2df8a"
-
-    # define a good RGB blue for water
+    grid_color = "#cccccc"
     water_blue = city_colors["blue"]
 
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
@@ -42,8 +41,6 @@ def main(args):
     gdf_water.loc[gdf_water["natural"] == "water", "color"] = water_blue
     gdf_water.crs = common_crs
 
-    # schools, but just the buildings
-    # tags = {"building": "school"}
     # cemeteries!
     tags = {"landuse": "cemetery"}
     gdf_cemetery = ox.features.features_from_place(place, tags=tags)
@@ -55,9 +52,6 @@ def main(args):
     gdf_park = gdf_park[gdf_park["geometry"].apply(lambda x: x.geom_type != "Point")]
     gdf_park.crs = common_crs
 
-    # write to disk
-    gdf_park.to_csv("baltimore_parks.csv")
-
     # tags = {'boundaries': "administrative", "admin_level": "10"}
     # gdf_neighborhoods = ox.features.features_from_place(place, tags=tags)
     # load geojson file
@@ -66,8 +60,8 @@ def main(args):
     gdf_neighborhoods.crs = common_crs
 
     # randomly assign one these colors to each neighborhood
-    random.seed(args.seed)
-    gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(list(city_colors.values())), axis=1)
+    # random.seed(args.seed)
+    # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(list(city_colors.values())), axis=1)
 
     # choose a random color for each city neightborhood
     # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
@@ -87,8 +81,6 @@ def main(args):
                 gdf_neighborhoods.total_bounds[2] + one_km.x * 0.5)
     ax.set_ylim(gdf_neighborhoods.total_bounds[1] - one_km.y * 0.5, 
                 gdf_neighborhoods.total_bounds[3] + one_km.y * 0.5)
-
-    grid_color = "#cccccc"
 
     # print the x and y axis as a faint grid
     ax.grid(color=grid_color, linestyle="--", linewidth=0.5)
@@ -123,9 +115,7 @@ def main(args):
     # plot each point in gdf_ghost with bike-14.png as an icon
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color="black", alpha=1)
 
-    font_color = "#aaaaaa"
-
-    add_title(ax, gdf_neighborhoods, place="Baltimore")
+    # add_title(ax, gdf_neighborhoods, place="Baltimore")
 
     # Print the name of each neighborhood on the map
     for idx, row in gdf_neighborhoods.iterrows():
