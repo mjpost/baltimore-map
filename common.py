@@ -12,7 +12,7 @@ one_km = lat_lon_dist(0.008983, 0.0113636)
 common_crs = 'EPSG:4326'
 
 # Baltimore City connect color scheme
-city_colors = {
+baltimore_city_colors = {
     "red": "#f23b33",
     "orange": "#f7693d",
     "yellow": "#FCEA65",  # "#fefc78",
@@ -21,7 +21,7 @@ city_colors = {
     "blue": "#a0cce8",
 }
 
-offsets = {
+baltimore_offsets = {
     "Holabird Industrial Park": (0, +0.003),
     "Locust Point Industrial Area": (0.001, -0.0035),
     "Penrose/Fayette Street Outreach": (0, +0.0005),
@@ -34,7 +34,7 @@ offsets = {
     "Stadium/Entertainment Area": (+0.001, 0),
 }
 
-names = {
+baltimore_names = {
     "Carroll - Camden Industrial Area": "Carroll-\nCamden\nIndustrial\nArea",
     "Penrose/Fayette Street Outreach": "Penrose/Fayette\nStreet Outreach",
     "Coppin Heights/Ash-Co-East": "Coppin Heights/\nAsh-Co-East",
@@ -42,7 +42,7 @@ names = {
 }
 
 def munge(name: str):
-    munged_name = names.get(name, name.replace(" ", "\n").replace("/","/\n").replace("-","-\n"))
+    munged_name = baltimore_names.get(name, name.replace(" ", "\n").replace("/","/\n").replace("-","-\n"))
     return munged_name.upper()
 
 def add_title(ax, gdf_neighborhoods, place="Baltimore"):

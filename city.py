@@ -42,7 +42,7 @@ def main(args):
     # water_blue = "#a6cee3"
 
     # grab a random color from city_colors and then remove it
-    water_blue = city_colors["blue"]
+    water_blue = baltimore_city_colors["blue"]
     # city_colors.remove(water_blue)
 
     # park_green = random.choice(list(city_colors.values()))
@@ -86,7 +86,7 @@ def main(args):
     random.seed(args.seed)
 
     if gdf_neighborhoods is not None:
-        gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(list(city_colors.values())), axis=1)
+        gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(list(baltimore_city_colors.values())), axis=1)
 
     # choose a random color for each city neightborhood
     # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
@@ -139,8 +139,8 @@ def main(args):
     # Print the name of each neighborhood on the map
     if gdf_neighborhoods is not None:
         for idx, row in gdf_neighborhoods.iterrows():
-            x = row["geometry"].centroid.x + offsets.get(row["name"], (0, 0))[0]
-            y = row["geometry"].centroid.y + offsets.get(row["name"], (0, 0))[1]
+            x = row["geometry"].centroid.x + baltimore_offsets.get(row["name"], (0, 0))[0]
+            y = row["geometry"].centroid.y + baltimore_offsets.get(row["name"], (0, 0))[1]
 
             ax.annotate(
                 text=munge(row["name"]),

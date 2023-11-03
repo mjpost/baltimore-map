@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 
-import random
+"""
+This creates a PDF plot of the city of Baltimore, including its unlabeled
+streets and neighborhoods.
+It was used as the base of my Baltimore City Neighborhoods poster, which
+I manually post-edited with a title, legend, and other information.
+
+© 2023 Matt Post
+"""
+
 import osmnx as ox
-import gpxpy
 import geopandas as gpd
-import gpxpy.gpx
-import pandas as pd
+import matplotlib.pyplot as plt
 
 from common import *
-
-import matplotlib.pyplot as plt
 
 
 # Turn on the local cache and console logging
@@ -27,22 +31,16 @@ def main(args):
     # are overlaid.
     G = ox.graph_from_place(place, network_type="drive", retain_all=True)
 
-    # gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=True, fill_edge_geometry=True)
+    # Convert to a GeoDataFrame and project to a common CRS
     gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
     gdf_streets = gdf_streets.to_crs(common_crs)
 
-    # bg_color = "white"  # "#e0e0e0"
+    # Define a number of colors
     street_color = "#cccccc"
     cemetery_gray = "#666666"
-    # park_green = "#b2df8a"
     grid_color = "#cccccc"
-
     ghost_color = "#721613"
-
-    # a good rich blue color for water
     water_blue = "#2c5c98"
-
-    # a deep rich green for parks
     park_green = "#1a5b07"
 
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
@@ -63,29 +61,27 @@ def main(args):
     gdf_park = gdf_park[gdf_park["geometry"].apply(lambda x: x.geom_type != "Point")]
     gdf_park.crs = common_crs
 
+    # The neighborhoods data can be retrieved from Open Street Map.
+    # However, for Baltimore at least, this data is incomplete. Instead, we
+    # load the data from a geojson file provided by the City of Baltimore.
+    # For other cities, you'd want to query OSM. However, note that many
+    # cities do not have neighborhood boundaries (admin level 10) in OSM.
     # tags = {'boundaries': "administrative", "admin_level": "10"}
     # gdf_neighborhoods = ox.features.features_from_place(place, tags=tags)
-    # load geojson file
     gdf_neighborhoods = gpd.read_file("data/Baltimore.geojson")
-    # gdf_neighborhoods["color"] = bg_color
     gdf_neighborhoods.crs = common_crs
 
-    # randomly assign one these colors to each neighborhood
-    # random.seed(args.seed)
-    # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(list(city_colors.values())), axis=1)
-
-    # choose a random color for each city neightborhood
-    # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
-
+    # Baltimore is also somewhat distinct in having good annotations for ghost bikes...
     tags = {"memorial": "ghost_bike"}
     gdf_ghost = ox.features.features_from_place(place, tags=tags)
     gdf_ghost.crs = common_crs
 
+    # ...and drinking fountains
     tags = {"amenity": "drinking_water"}
     gdf_drinking_fountains = ox.features.features_from_place(place, tags=tags)
     gdf_drinking_fountains.crs = common_crs
 
-    ## Baltimore map, set figsize=24,36, remove margins, and set dpi=300
+    # Setup the figure and plot
     fig, ax = plt.subplots(figsize=(24, 36), dpi=300)
     fig.tight_layout(pad=10)
 
@@ -113,26 +109,20 @@ def main(args):
     for spine in ax.spines.values():
         spine.set_visible(False)
 
-    # use a dashed line for the axis grid
-    # gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="-", ec="black", linewidth=2, alpha=1)
-    gdf_neighborhoods.plot(ax=ax, facecolor="white", linestyle="-", ec="black", linewidth=2, alpha=1)
-
+    # plot the streets, neighborhoods, water, parks, and cemeteries
     gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
-
-    # gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=1)
+    gdf_neighborhoods.plot(ax=ax, facecolor="white", linestyle="-", ec="black", linewidth=2, alpha=1)
     gdf_water.plot(ax=ax, facecolor=water_blue, ec="black", linewidth=0, alpha=0.5)
     gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=0, alpha=0.5)
     gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, linewidth=0, alpha=0.3)
-
-    # plot each point in gdf_ghost with bike-14.png as an icon
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=ghost_color, alpha=1)
 
-    # add_title(ax, gdf_neighborhoods, place="Baltimore")
-
-    # Print the name of each neighborhood on the map
+    # Print the name of each neighborhood on the map.
+    # These print at the center of the neighborhood polygon, which isn't always
+    # correct. So we use a dictionary of offsets to shift them around a bit.
     for idx, row in gdf_neighborhoods.iterrows():
-        x = row["geometry"].centroid.x + offsets.get(row["Name"], (0, 0))[0]
-        y = row["geometry"].centroid.y + offsets.get(row["Name"], (0, 0))[1]
+        x = row["geometry"].centroid.x + baltimore_offsets.get(row["Name"], (0, 0))[0]
+        y = row["geometry"].centroid.y + baltimore_offsets.get(row["Name"], (0, 0))[1]
 
         ax.annotate(
             text=munge(row["Name"]),
