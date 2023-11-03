@@ -30,6 +30,8 @@ offsets = {
     "Irvington": (0, +0.002),
     "West Forest Park": (0, +0.001),
     "Purnell": (0, +0.0005),
+    "Patterson Park Neighborhood": (0, +0.0005),
+    "Stadium/Entertainment Area": (+0.001, 0),
 }
 
 names = {
