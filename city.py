@@ -2,14 +2,9 @@
 
 import random
 import osmnx as ox
-import gpxpy
-import geopandas as gpd
-import gpxpy.gpx
-import pandas as pd
+import matplotlib.pyplot as plt
 
 from common import *
-
-import matplotlib.pyplot as plt
 
 
 # Turn on the local cache and console logging
@@ -22,46 +17,22 @@ def main(args):
     place = args.place
     placename = place.split(',')[0].replace(" ", "").lower()
 
-    bg_color = "white"  # "#e0e0e0"
-    street_color = "#cccccc"
-    park_green = "#b2df8a"
+    G = ox.graph_from_place(place, network_type="drive", retain_all=True)
 
-    G = ox.graph_from_place(place, network_type="all_private")
-
-    gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=True, fill_edge_geometry=True)
+    gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
     gdf_streets = gdf_streets.to_crs(common_crs)
-    # assign every street a random color from city_colors
-    # gdf_streets["color"] = gdf_streets.apply(lambda x: random.choice(list(city_colors.values())), axis=1)
     gdf_streets["color"] = street_color
-
-    # get all parks from the OSM database
-    # tags = {'natural': 'water', 'boundaries': "administrative", "admin_level": "9", 'leisure': ["garden"]}
-    # tags = {'boundaries': "administrative", "admin_level": "10", "natural": "water"}  # , "leisure": ["park", "garden"]}
-
-    # define a good RGB blue for water
-    # water_blue = "#a6cee3"
-
-    # grab a random color from city_colors and then remove it
-    water_blue = baltimore_city_colors["blue"]
-    # city_colors.remove(water_blue)
-
-    # park_green = random.choice(list(city_colors.values()))
-    # city_colors.remove(park_green)
 
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
     tags = {"natural": "water"}
     gdf_water = ox.features.features_from_place(place, tags=tags)
-    # anything with a "natural" column value of "water" should be a nice sea blue
     gdf_water.loc[gdf_water["natural"] == "water", "color"] = water_blue
     gdf_water.crs = common_crs
 
     # schools, but just the buildings
-    # tags = {"building": "school"}
-    # cemeteries!
-    # tags = {"landuse": "cemetery"}
+    # tags = {"building": "school", "landuse": "cemetery"}
     # gdf_buildings = ox.features.features_from_place(place, tags=tags)
     # gdf_buildings.crs = common_crs
-    # use a spooky gray for those
 
     try:
         tags = {"leisure": ["park", "garden"]}
@@ -85,22 +56,13 @@ def main(args):
     # randomly assign one these colors to each neighborhood
     random.seed(args.seed)
 
-    if gdf_neighborhoods is not None:
-        gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(list(baltimore_city_colors.values())), axis=1)
-
-    # choose a random color for each city neightborhood
-    # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
-
-    ## Baltimore map
-    fig, ax = plt.subplots(figsize=(36,48), dpi=300)
-    fig.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9)
+    # the plot. You'll have to adjust these for the city you're doing
+    fig, ax = plt.subplots(figsize=(24,36), dpi=300)
 
     ax.set_xlim(gdf_streets.total_bounds[0] - one_km.x,
                 gdf_streets.total_bounds[2] + one_km.x)
     ax.set_ylim(gdf_streets.total_bounds[1] - one_km.y,
                 gdf_streets.total_bounds[3] + one_km.y)
-
-    grid_color = "#cccccc"
 
     # print the x and y axis as a faint grid
     ax.grid(color=grid_color, linestyle="--", linewidth=0.5)
@@ -129,12 +91,12 @@ def main(args):
         gdf_neighborhoods.plot(ax=ax, facecolor="white", linestyle="-", ec="black", linewidth=2, alpha=1)
 
     # gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=1)
-    gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1.5, alpha=1)
+    gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1.5, alpha=0.5)
 
     if gdf_park is not None:
-        gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=0, alpha=1)
+        gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=0, alpha=0.5)
 
-    add_title(ax, gdf_streets, place=placename.upper())
+    # add_title(ax, gdf_streets, place=placename.upper())
 
     # Print the name of each neighborhood on the map
     if gdf_neighborhoods is not None:
@@ -154,7 +116,7 @@ def main(args):
                 # name="Phosphate",
             )
 
-    plt.savefig(f"{placename}-plain.pdf", dpi=300)
+    plt.savefig(f"maps/{placename}_plain.pdf", dpi=300)
 
 
 if __name__ == "__main__":

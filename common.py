@@ -11,6 +11,15 @@ one_km = lat_lon_dist(0.008983, 0.0113636)
 # Define a common CRS for both GeoDataFrames (replace with your desired CRS)
 common_crs = 'EPSG:4326'
 
+# Define a number of colors
+street_color = "#cccccc"
+cemetery_gray = "#666666"
+grid_color = "#cccccc"
+ghost_color = "#721613"
+water_blue = "#2c5c98"
+park_green = "#1a5b07"
+
+
 # Baltimore City connect color scheme
 baltimore_city_colors = {
     "red": "#f23b33",
