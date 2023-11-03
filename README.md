@@ -43,4 +43,4 @@ I am indebted to the City of Baltimore, Open Street Map, and Geoff Boeing.
 
 * The City of Baltimore [provides excellent resources](https://planning.baltimorecity.gov/maps-data/gis), including a neighborhood map that includes a complete list of neighborhoods not found in Open Street Map.
 * Open Street Map provides all the street-level data, as well as layers upon layers of annotations. You should consider contributing when you find an error; I've made a number of edits myself!
-* Geoff Boeing's is the author of [OSMnx](https://github.com/gboeing/osmnx), an amazing Pythong wrapper around Open Street Map data.
+* Geoff Boeing is the author of [OSMnx](https://github.com/gboeing/osmnx), an amazing Pythong wrapper around Open Street Map data.
