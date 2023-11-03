@@ -62,6 +62,7 @@ def main(args):
     gdf_park = ox.features.features_from_place(place, tags=tags)
     # remove all elements of type node
     gdf_park = gdf_park[gdf_park["geometry"].apply(lambda x: x.geom_type != "Point")]
+    gdf_park["color"] = park_green
     gdf_park.crs = common_crs
 
     # load geojson file
@@ -97,6 +98,16 @@ def main(args):
             gdf_neighborhoods.loc[i, "color"] = colors[coloring[i]]
         # gdf_neighborhoods['color'] = [colors[coloring[i]] for i in range(len(gdf_neighborhoods))]
 
+    # for i in range(len(gdf_water)):
+    #     gdf_water.loc[i, "color"] = random.choice(colors)
+
+    colors = [city_colors[x] for x in "red orange pink purple yellow".split()]
+    gdf_park["color"] = [random.choice(colors) for i in range(len(gdf_park))]
+    # for i in range(len(gdf_park)):
+    #     color = random.choice(colors)
+    #     gdf_park.loc[i, "color"] = color
+        # print(i, color)
+
     # for i, row in gdf_neighborhoods.iterrows():
     #     print(row["Name"], row["color"])
 
@@ -119,7 +130,7 @@ def main(args):
     gdf_drinking_fountains = ox.features.features_from_place(place, tags=tags)
     gdf_drinking_fountains.crs = common_crs
 
-    # print(gdf_park)
+    print(gdf_park.head())
 
     ## Baltimore map
     fig, ax = plt.subplots(figsize=(36,48), dpi=300)
@@ -143,8 +154,8 @@ def main(args):
     # use a dashed line for the axis grid
     gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="-", ec=light_gray, linewidth=0.5, alpha=1)
     # gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
-    gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=1)
-    # gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=1.2, alpha=1)
+    gdf_water.plot(ax=ax, facecolor=gdf_water["color"], ec=water_blue, linewidth=1, alpha=1)
+    gdf_park.plot(ax=ax, facecolor=gdf_park["color"], ec="black", linewidth=1.2, alpha=1)
     # gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: "#%06x" % random.randint(0, 0xFFFFFF), axis=1)
     # gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], linestyle="--", ec="orange", linewidth=1.5, alpha=1)
 
