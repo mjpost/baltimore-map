@@ -22,17 +22,28 @@ def main(args):
     place = "Baltimore, MD"
     placename = place.split(',')[0].replace(" ", "").lower()
 
-    G = ox.graph_from_place(place, network_type="all_private")
+    # Using a network type of "all_private" will get all the alleys etc
+    # It also makes the boundaries with water a lot fuzzier since they
+    # are overlaid.
+    G = ox.graph_from_place(place, network_type="drive", retain_all=True)
 
-    gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=True, fill_edge_geometry=True)
+    # gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=True, fill_edge_geometry=True)
+    gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
     gdf_streets = gdf_streets.to_crs(common_crs)
 
-    bg_color = "white"  # "#e0e0e0"
+    # bg_color = "white"  # "#e0e0e0"
     street_color = "#cccccc"
     cemetery_gray = "#666666"
-    park_green = "#b2df8a"
+    # park_green = "#b2df8a"
     grid_color = "#cccccc"
-    water_blue = city_colors["blue"]
+
+    ghost_color = "#721613"
+
+    # a good rich blue color for water
+    water_blue = "#2c5c98"
+
+    # a deep rich green for parks
+    park_green = "#1a5b07"
 
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
     tags = {"natural": "water"}
@@ -108,12 +119,12 @@ def main(args):
     gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
 
     # gdf_water.plot(ax=ax, facecolor=water_blue, ec=water_blue, linewidth=1, alpha=1)
-    gdf_water.plot(ax=ax, facecolor=water_blue, ec="black", linewidth=0, alpha=1)
-    gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=0, alpha=1)
+    gdf_water.plot(ax=ax, facecolor=water_blue, ec="black", linewidth=0, alpha=0.5)
+    gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=0, alpha=0.5)
     gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, linewidth=0, alpha=0.3)
 
     # plot each point in gdf_ghost with bike-14.png as an icon
-    gdf_ghost.plot(ax=ax, marker="X", markersize=50, color="black", alpha=1)
+    gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=ghost_color, alpha=1)
 
     # add_title(ax, gdf_neighborhoods, place="Baltimore")
 
@@ -130,6 +141,7 @@ def main(args):
             fontsize=7,
             color="black",
             weight="bold",
+            # name="Damascus",
             name="Avenir Next Condensed",
             # name="Phosphate",
         )
