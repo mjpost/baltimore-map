@@ -85,8 +85,9 @@ def main(args):
     gdf_drinking_fountains = ox.features.features_from_place(place, tags=tags)
     gdf_drinking_fountains.crs = common_crs
 
-    ## Baltimore map
-    fig, ax = plt.subplots(figsize=(36,48), dpi=300)
+    ## Baltimore map, set figsize=24,36, remove margins, and set dpi=300
+    fig, ax = plt.subplots(figsize=(24, 36), dpi=300)
+    fig.tight_layout(pad=10)
 
     ax.set_xlim(gdf_neighborhoods.total_bounds[0] - one_km.x * 0.5, 
                 gdf_neighborhoods.total_bounds[2] + one_km.x * 0.5)
@@ -138,15 +139,15 @@ def main(args):
             xy=(x, y),
             horizontalalignment="center",
             verticalalignment="center",
-            fontsize=7,
+            fontsize=6,
             color="black",
-            weight="bold",
+            weight=200,
             # name="Damascus",
             name="Avenir Next Condensed",
             # name="Phosphate",
         )
 
-    plt.savefig(f"{placename}.pdf", dpi=300)
+    fig.savefig(f"{placename}.pdf", dpi=300)
 
 
 if __name__ == "__main__":
