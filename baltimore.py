@@ -19,7 +19,6 @@ from common import *
 # Turn on the local cache and console logging
 ox.settings.log_console = True
 ox.settings.use_cache = True
-print(ox.__version__)
 
 
 def main(args):
@@ -34,14 +33,6 @@ def main(args):
     # Convert to a GeoDataFrame and project to a common CRS
     gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
     gdf_streets = gdf_streets.to_crs(common_crs)
-
-    # Define a number of colors
-    street_color = "#cccccc"
-    cemetery_gray = "#666666"
-    grid_color = "#cccccc"
-    ghost_color = "#721613"
-    water_blue = "#2c5c98"
-    park_green = "#1a5b07"
 
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
     tags = {"natural": "water"}
@@ -71,6 +62,9 @@ def main(args):
     gdf_neighborhoods = gpd.read_file("data/Baltimore.geojson")
     gdf_neighborhoods.crs = common_crs
 
+    # print the number of rows in gdf_neighborhoods
+    print(f"Number of neighborhoods: {len(gdf_neighborhoods)}")
+
     # Baltimore is also somewhat distinct in having good annotations for ghost bikes...
     tags = {"memorial": "ghost_bike"}
     gdf_ghost = ox.features.features_from_place(place, tags=tags)
@@ -85,9 +79,9 @@ def main(args):
     fig, ax = plt.subplots(figsize=(24, 36), dpi=300)
     fig.tight_layout(pad=10)
 
-    ax.set_xlim(gdf_neighborhoods.total_bounds[0] - one_km.x * 0.5, 
+    ax.set_xlim(gdf_neighborhoods.total_bounds[0] - one_km.x * 0.75, 
                 gdf_neighborhoods.total_bounds[2] + one_km.x * 0.5)
-    ax.set_ylim(gdf_neighborhoods.total_bounds[1] - one_km.y * 0.5, 
+    ax.set_ylim(gdf_neighborhoods.total_bounds[1] - one_km.y * 0.25, 
                 gdf_neighborhoods.total_bounds[3] + one_km.y * 0.5)
 
     # print the x and y axis as a faint grid
@@ -98,8 +92,9 @@ def main(args):
     ax.yaxis.tick_right()
     ax.tick_params(axis="both", direction="in", length=6, width=0.5, colors=grid_color)
 
-    # use three decimal places for the axis tick labels
+    # use only two decimal places for the axis tick labels
     ax.xaxis.set_major_formatter(plt.FormatStrFormatter("%.3f"))
+    ax.yaxis.set_major_formatter(plt.FormatStrFormatter("%.3f"))
 
     # draw gridlines every one mile
     ax.xaxis.set_major_locator(plt.MultipleLocator(one_mile.x))
