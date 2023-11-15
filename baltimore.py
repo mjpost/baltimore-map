@@ -81,8 +81,8 @@ def main(args):
 
     ax.set_xlim(gdf_neighborhoods.total_bounds[0] - one_km.x * 0.75, 
                 gdf_neighborhoods.total_bounds[2] + one_km.x * 0.5)
-    ax.set_ylim(gdf_neighborhoods.total_bounds[1] - one_km.y * 0.25, 
-                gdf_neighborhoods.total_bounds[3] + one_km.y * 0.5)
+    ax.set_ylim(gdf_neighborhoods.total_bounds[1] - one_km.y * 2.3,
+                gdf_neighborhoods.total_bounds[3] + one_km.y * 0.25)
 
     # print the x and y axis as a faint grid
     ax.grid(color=grid_color, linestyle="--", linewidth=0.5)
