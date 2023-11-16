@@ -11,14 +11,17 @@ one_km = lat_lon_dist(0.008983, 0.0113636)
 # Define a common CRS for both GeoDataFrames (replace with your desired CRS)
 common_crs = 'EPSG:4326'
 
+def rgb_to_hex(r, g, b):
+    return f'#{r:02x}{g:02x}{b:02x}'
+
 # Define a number of colors
 street_color = "#cccccc"
 cemetery_gray = "#666666"
 grid_color = "#cccccc"
 ghost_color = "#721613"
-water_blue = "#2c5c98"
+# what is (43, 101, 50) in hex?
+water_blue = rgb_to_hex(4, 53, 108)  # rgb_to_hex(11, 82, 136)  # "#2c5c98"
 park_green = "#1a5b07"
-
 
 # Baltimore City connect color scheme
 baltimore_city_colors = {
@@ -30,7 +33,7 @@ baltimore_city_colors = {
     "blue": "#a0cce8",
 }
 
-baltimore_offsets = {
+neighborhood_offsets = {
     "Holabird Industrial Park": (0, +0.003),
     "Locust Point Industrial Area": (0.001, -0.0035),
     "Penrose/Fayette Street Outreach": (0, +0.0005),

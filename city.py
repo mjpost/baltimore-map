@@ -101,8 +101,8 @@ def main(args):
     # Print the name of each neighborhood on the map
     if gdf_neighborhoods is not None:
         for idx, row in gdf_neighborhoods.iterrows():
-            x = row["geometry"].centroid.x + baltimore_offsets.get(row["name"], (0, 0))[0]
-            y = row["geometry"].centroid.y + baltimore_offsets.get(row["name"], (0, 0))[1]
+            x = row["geometry"].centroid.x + neighborhood_offsets.get(row["name"], (0, 0))[0]
+            y = row["geometry"].centroid.y + neighborhood_offsets.get(row["name"], (0, 0))[1]
 
             ax.annotate(
                 text=munge(row["name"]),
