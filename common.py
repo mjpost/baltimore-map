@@ -46,15 +46,29 @@ neighborhood_offsets = {
     "Stadium/Entertainment Area": (+0.001, 0),
 }
 
-baltimore_names = {
-    "Carroll - Camden Industrial Area": "Carroll-\nCamden\nIndustrial\nArea",
+neighborhood_names = {
+    "Carroll - Camden Industrial Area": "Carroll-Camden\nIndustrial Area",
     "Penrose/Fayette Street Outreach": "Penrose/Fayette\nStreet Outreach",
     "Coppin Heights/Ash-Co-East": "Coppin Heights/\nAsh-Co-East",
     "Concerned Citizens of Forest Park": "Concerned\nCitizens\nof Forest\nPark",
+    "Greenmount West": "Green-\nmount\nWest",
+    "South Clifton Park": "South Clifton Park",
+    "North Roland Park / Poplar Hill": "North Roland Park\n/ Poplar Hill",
+    "South Clifton Park": "South Clifton Park",
+    "Canton Industrial Area": "Canton Industrial Area",
+    "Local Point Industrial Area": "Local Point\nIndustrial Area",
+    "Carroll-Camden Industrial Area": "Carroll-Camden\nIndustrial Area",
+    "Cherry Hill": "Cherry Hill",
+    "Wilhelm Park": "Wilhelm Park",
+    "Morrell Park": "Morrell Park",
+    "Forest Park Golf Course": "Forest Park\nGolf Course",
+    "Howard Park": "Howard Park",
+    "Grove Park": "Grove Park",
+    "West Hills": "West Hills",
 }
 
 def munge(name: str):
-    munged_name = baltimore_names.get(name, name.replace(" ", "\n").replace("/","/\n").replace("-","-\n"))
+    munged_name = neighborhood_names.get(name, name.replace(" ", "\n").replace("/","/\n").replace("-","-\n"))
     return munged_name.upper()
 
 def add_title(ax, gdf_neighborhoods, place="Baltimore"):
