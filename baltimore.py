@@ -50,8 +50,8 @@ def main(args):
 
     compensation = 1.5 * lon_distance(west, east, (north + south) / 2) - (north - south)
     # Keep a bit more space at the bottom, an aesthetic choice
-    north += one_mile.y * 1.5
-    south -= compensation - one_mile.y * 1.5
+    north += one_mile.y * 1.2
+    south -= compensation - one_mile.y * 1.2
 
     # print the number of rows in gdf_neighborhoods
     print(f"Number of neighborhoods: {len(gdf_neighborhoods)}")
@@ -140,7 +140,7 @@ def main(args):
             horizontalalignment="center",
             verticalalignment="center",
             fontsize=7,
-            color="black",
+            color="#333333",
             weight=600,
             # name="Damascus",
             name="Avenir Next",
