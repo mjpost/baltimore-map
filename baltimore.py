@@ -67,6 +67,11 @@ def main(args):
     gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
     gdf_streets = gdf_streets.to_crs(common_crs)
 
+    tags = {"highway": "cycleway", "route": "bicycle"}
+    # tags = {"network": "lcn", "route": "bicycle"}
+    gdf_bikepaths = ox.features.features_from_bbox(north, south, east, west, tags=tags)
+    gdf_bikepaths.crs = common_crs
+
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
     tags = {"natural": "water"}
     gdf_water = ox.features.features_from_bbox(north, south, east, west, tags=tags)
@@ -122,6 +127,8 @@ def main(args):
     # plot the streets, neighborhoods, water, parks, and cemeteries
     gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
     gdf_neighborhoods.plot(ax=ax, facecolor="white", linestyle="-", ec="#888888", linewidth=1.5, alpha=1)
+    gdf_bikepaths.plot(ax=ax, ec="orange", linewidth=5, alpha=0.3)
+    gdf_bikepaths.plot(ax=ax, ec="orange", linewidth=1, alpha=1)
     gdf_water.plot(ax=ax, facecolor=water_blue, ec="black", linewidth=0, alpha=0.5)
     gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=0, alpha=0.5)
     gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, linewidth=0, alpha=0.3)
