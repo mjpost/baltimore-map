@@ -18,7 +18,7 @@ def rgb_to_hex(r, g, b):
 street_color = "#cccccc"
 cemetery_gray = "#666666"
 grid_color = "#cccccc"
-ghost_color = "#721613"
+ghost_color = "black"  # "#721613"
 # what is (43, 101, 50) in hex?
 water_blue = rgb_to_hex(4, 53, 108)  # rgb_to_hex(11, 82, 136)  # "#2c5c98"
 park_green = "#1a5b07"

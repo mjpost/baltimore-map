@@ -126,9 +126,9 @@ def main(args):
 
     # plot the streets, neighborhoods, water, parks, and cemeteries
     gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
-    gdf_neighborhoods.plot(ax=ax, facecolor="white", linestyle="-", ec="#888888", linewidth=1.5, alpha=1)
-    gdf_bikepaths.plot(ax=ax, ec="orange", linewidth=5, alpha=0.3)
-    gdf_bikepaths.plot(ax=ax, ec="orange", linewidth=1, alpha=1)
+    gdf_bikepaths.plot(ax=ax, ec="orange", linewidth=3, alpha=0.3)
+    gdf_bikepaths.plot(ax=ax, ec="orange", linewidth=0.5, alpha=1)
+    gdf_neighborhoods.plot(ax=ax, facecolor="white", linestyle="-", ec="#555555", linewidth=2, alpha=1)
     gdf_water.plot(ax=ax, facecolor=water_blue, ec="black", linewidth=0, alpha=0.5)
     gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=0, alpha=0.5)
     gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, linewidth=0, alpha=0.3)
