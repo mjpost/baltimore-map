@@ -9,19 +9,41 @@ one_mile = lat_lon_dist(0.0144927536231884, 0.0181818181818182)
 one_km = lat_lon_dist(0.008983, 0.0113636)
 
 # Define a common CRS for both GeoDataFrames (replace with your desired CRS)
-common_crs = 'EPSG:4326'
+common_crs = 'epsg:4326'
 
 def rgb_to_hex(r, g, b):
     return f'#{r:02x}{g:02x}{b:02x}'
 
 # Define a number of colors
+bg_color = "white"
 street_color = "#cccccc"
 cemetery_gray = "#666666"
 grid_color = "#cccccc"
 ghost_color = "black"  # "#721613"
+
+## v3
+water_blue = rgb_to_hex(4, 53, 108)
+park_green = "#1a5b07"  # mine
+#park_green = "#b9e5a1"  # google
+bike_orange = "orange"
+
+# water_blue = "blue"
+# park_green = "green"
+# bike_orange = "orange"
+
+## old veriants
 # what is (43, 101, 50) in hex?
-water_blue = rgb_to_hex(4, 53, 108)  # rgb_to_hex(11, 82, 136)  # "#2c5c98"
-park_green = "#1a5b07"
+#   # rgb_to_hex(11, 82, 136)  # "#2c5c98"
+
+## much lighter version (could turn off alpha)
+## This looks good when you have starker neighborhood boundaries
+# water_blue = "#b0cae3"
+# park_green = "#c2dd9a"
+
+# VISIT BALTIMORE
+# water_blue = "#14275b"
+# park_green = "#2d6a76"
+# bike_orange = "#e44b25"
 
 # Baltimore City connect color scheme
 baltimore_city_colors = {
@@ -57,8 +79,10 @@ neighborhood_names = {
     "Concerned Citizens of Forest Park": "Concerned\nCitizens\nof Forest\nPark",
     "Coppin Heights/Ash-Co-East": "Coppin Heights/\nAsh-Co-East",
     "Curtis Bay Industrial Area": "Curtis Bay\nIndustrial\nArea",
+    "Easterwood": "Easter-\nwood",
     "Fairfield Area": "Fairfield Area",
     "Forest Park Golf Course": "Forest Park\nGolf Course",
+    "Franklintown Road": "Franklin-\ntown\nRoad",
     "Greenmount West": "Green-\nmount\nWest",
     "Grove Park": "Grove Park",
     "Gwynn Falls / Leakin Park": "Gwynn Falls / Leakin Park",
