@@ -124,6 +124,7 @@ def main(args):
 
     # Setup the figure and plot
     fig, ax = plt.subplots(figsize=(24, 36), dpi=300)
+    ax.set_facecolor(bg_color)
     fig.tight_layout(pad=0)
 
     ax.set_xlim(west, east)
@@ -152,10 +153,10 @@ def main(args):
     gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
     gdf_cycleways.plot(ax=ax, ec=bike_orange, linewidth=6, alpha=0.3)
     gdf_bikeable.plot(ax=ax, ec=bike_orange, linewidth=0.5, alpha=1, linestyle="--")
-    gdf_neighborhoods.plot(ax=ax, facecolor=bg_color, linestyle="-", ec="#555555", linewidth=3, alpha=1)
+    gdf_neighborhoods.plot(ax=ax, facecolor=hood_color, linestyle="-", ec="#555555", linewidth=3, alpha=1)
     gdf_water.plot(ax=ax, facecolor=water_blue, ec="black", linewidth=0, alpha=0.55)
     gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=0, alpha=0.55)
-    gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, linewidth=0, alpha=0.3)
+    gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, ec="#444444", linewidth=0.5, alpha=0.3)
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=ghost_color, alpha=1)
 
     # Print the name of each neighborhood on the map.

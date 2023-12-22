@@ -16,14 +16,19 @@ def rgb_to_hex(r, g, b):
 
 # Define a number of colors
 bg_color = "white"
-street_color = "#cccccc"
+hood_color = "white"
+street_color = "#dddddd"
 cemetery_gray = "#666666"
 grid_color = "#cccccc"
 ghost_color = "black"  # "#721613"
 
+# wandrer
+park_green = "#c1e1a7"
+water_blue = "#8bccec"
+
 ## v3
-water_blue = rgb_to_hex(4, 53, 108)
-park_green = "#1a5b07"  # mine
+# water_blue = rgb_to_hex(4, 53, 108)
+# park_green = "#1a5b07"  # mine
 #park_green = "#b9e5a1"  # google
 bike_orange = "orange"
 
