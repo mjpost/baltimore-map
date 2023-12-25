@@ -50,8 +50,8 @@ def main(args):
 
     compensation = 1.5 * lon_distance(west, east, (north + south) / 2) - (north - south)
     # Keep a bit more space at the bottom, an aesthetic choice
-    north += one_mile.y * 1.2
-    south -= compensation - one_mile.y * 1.2
+    north += one_mile.y * 1.5
+    south -= compensation - one_mile.y * 1.5
 
     # print the number of rows in gdf_neighborhoods
     print(f"Number of neighborhoods: {len(gdf_neighborhoods)}")
@@ -150,14 +150,14 @@ def main(args):
         spine.set_visible(False)
 
     # plot the streets, neighborhoods, water, parks, and cemeteries
-    gdf_streets.plot(ax=ax, ec=street_color, linewidth=1, alpha=0.5)
-    gdf_cycleways.plot(ax=ax, ec=bike_orange, linewidth=6, alpha=0.3)
-    gdf_bikeable.plot(ax=ax, ec=bike_orange, linewidth=0.5, alpha=1, linestyle="--")
-    gdf_neighborhoods.plot(ax=ax, facecolor=hood_color, linestyle="-", ec="#555555", linewidth=3, alpha=1)
-    gdf_water.plot(ax=ax, facecolor=water_blue, ec="black", linewidth=0, alpha=0.55)
-    gdf_park.plot(ax=ax, facecolor=park_green, ec="black", linewidth=0, alpha=0.55)
-    gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, ec="#444444", linewidth=0.5, alpha=0.3)
+    gdf_streets.plot(ax=ax, ec=street_color, linewidth=1.5, alpha=0.5, zorder=1)
+    gdf_cycleways.plot(ax=ax, ec=bike_orange, linewidth=5, alpha=0.3)
+    gdf_bikeable.plot(ax=ax, ec=bike_orange, linewidth=1, alpha=1, linestyle="--")
+    gdf_water.plot(ax=ax, facecolor=water_blue, alpha=1)
+    gdf_park.plot(ax=ax, facecolor=park_green, alpha=0.6)
+    gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, ec="#444444", linewidth=1, alpha=0.3)
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=ghost_color, alpha=1)
+    gdf_neighborhoods.plot(ax=ax, facecolor='none', ec="#AAAAAA", linewidth=2, alpha=0.9, zorder=10)
 
     # Print the name of each neighborhood on the map.
     # These print at the center of the neighborhood polygon, which isn't always
@@ -167,16 +167,19 @@ def main(args):
         y = row["geometry"].centroid.y + neighborhood_offsets.get(row["Name"], (0, 0))[1]
 
         ax.annotate(
-            text=munge(row["Name"]),
+            text=munge(row["Name"]).upper(),
             xy=(x, y),
             horizontalalignment="center",
             verticalalignment="center",
-            fontsize=7,
-            color="#333333",
-            weight=600,
-            # name="Damascus",
-            name="Avenir Next",
+            fontsize=6,
+            color="#666666",
+            weight=800,
+            # name="Georgia",
+            name="Helvetica",
+            # name="Rockwell",
+            # name="Copperplate",  # no, too much
             # name="Phosphate",
+            zorder=20,
         )
 
     fig.savefig(f"{placename}.pdf", dpi=300, pad_inches=0.0)

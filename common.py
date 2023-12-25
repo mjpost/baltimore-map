@@ -20,17 +20,18 @@ hood_color = "white"
 street_color = "#dddddd"
 cemetery_gray = "#666666"
 grid_color = "#cccccc"
-ghost_color = "black"  # "#721613"
 
 # wandrer
-park_green = "#c1e1a7"
-water_blue = "#8bccec"
+park_green = "#e0eed2"  # before transparency: "#c1e1a7"
+water_blue = "#c6e2f3"  # before transparency: "#8bccec"
 
 ## v3
 # water_blue = rgb_to_hex(4, 53, 108)
 # park_green = "#1a5b07"  # mine
 #park_green = "#b9e5a1"  # google
 bike_orange = "orange"
+
+ghost_color = bike_orange  # "black"  # "#721613"
 
 # water_blue = "blue"
 # park_green = "green"
@@ -112,7 +113,7 @@ neighborhood_names = {
 
 def munge(name: str):
     munged_name = neighborhood_names.get(name, name.replace(" ", "\n").replace("/","/\n").replace("-","-\n"))
-    return munged_name.upper()
+    return munged_name
 
 def add_title(ax, gdf_neighborhoods, place="Baltimore"):
     ax.text(
