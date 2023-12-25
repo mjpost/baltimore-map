@@ -21,11 +21,7 @@ from common import *
 ox.settings.log_console = True
 ox.settings.use_cache = True
 
-
-def main(args):
-    place = "Baltimore, MD"
-    placename = place.split(',')[0].replace(" ", "").lower()
-
+def init_baltimore():
     # The neighborhoods data can be retrieved from Open Street Map.
     # However, for Baltimore at least, this data is incomplete. Instead, we
     # load the data from a geojson file provided by the City of Baltimore.
@@ -66,6 +62,14 @@ def main(args):
     # Convert to a GeoDataFrame and project to a common CRS
     gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
     gdf_streets = gdf_streets.to_crs(common_crs)
+
+    return gdf_neighborhoods, gdf_streets, north, south, east, west
+
+def main(args):
+    place = "Baltimore, MD"
+    placename = "baltimore"
+
+    gdf_neighborhoods, gdf_streets, north, south, east, west = init_baltimore()
 
     # tags = {"highway": "cycleway", "route": "bicycle"}
     tags = {
