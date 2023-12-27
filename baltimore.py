@@ -21,7 +21,8 @@ from common import *
 ox.settings.log_console = True
 ox.settings.use_cache = True
 
-def init_baltimore():
+
+def init_baltimore(tight=False):
     # The neighborhoods data can be retrieved from Open Street Map.
     # However, for Baltimore at least, this data is incomplete. Instead, we
     # load the data from a geojson file provided by the City of Baltimore.
@@ -34,25 +35,27 @@ def init_baltimore():
 
     # adjust the lat/long boundaries to get to a 1.5 height:width ratio
     west, south, east, north = gdf_neighborhoods.total_bounds
-    west -= one_mile.x
-    east += one_mile.x
-
-    # for the north/south adjustments, we need to take into account the
-    # curvature of the earth. Here we find how much we need to add to the Y
-    # access, using the mid-latitude point as an approximation.
-    # return the distance between two longitude coordinates at a given latitude
-    def lon_distance(lon1, lon2, lat):
-        return (lon2 - lon1) * math.cos(lat * math.pi / 180)
-
-    compensation = 1.5 * lon_distance(west, east, (north + south) / 2) - (north - south)
-    # Keep a bit more space at the bottom, an aesthetic choice
-    north += one_mile.y * 1.5
-    south -= compensation - one_mile.y * 1.5
-
     # print the number of rows in gdf_neighborhoods
     print(f"Number of neighborhoods: {len(gdf_neighborhoods)}")
     print("City boundaries:", gdf_neighborhoods.total_bounds)
-    print("Adjusted boundaries:", *map(lambda x: f"{x:.5f}", [west, south, east, north]))
+
+    if not tight:
+        west -= one_mile.x
+        east += one_mile.x
+
+        # for the north/south adjustments, we need to take into account the
+        # curvature of the earth. Here we find how much we need to add to the Y
+        # access, using the mid-latitude point as an approximation.
+        # return the distance between two longitude coordinates at a given latitude
+        def lon_distance(lon1, lon2, lat):
+            return (lon2 - lon1) * math.cos(lat * math.pi / 180)
+
+        compensation = 1.5 * lon_distance(west, east, (north + south) / 2) - (north - south)
+        # Keep a bit more space at the bottom, an aesthetic choice
+        north += one_mile.y * 1.5
+        south -= compensation - one_mile.y * 1.5
+
+        print("Adjusted boundaries:", *map(lambda x: f"{x:.5f}", [west, south, east, north]))
 
     # Using a network type of "all_private" will get all the alleys etc
     # It also makes the boundaries with water a lot fuzzier since they
@@ -104,6 +107,9 @@ def main(args):
     tags = {"natural": "water"}
     gdf_water = ox.features.features_from_bbox(north, south, east, west, tags=tags)
     gdf_water.crs = common_crs
+
+    # Remove all points from the water data
+    gdf_water = gdf_water[gdf_water.geometry.type.isin(['Polygon', 'MultiPolygon'])]
 
     # cemeteries!
     tags = {"landuse": "cemetery"}
