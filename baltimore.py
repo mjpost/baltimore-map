@@ -39,16 +39,11 @@ def init_baltimore(tight=False):
     print(f"Number of neighborhoods: {len(gdf_neighborhoods)}")
     print("City boundaries:", gdf_neighborhoods.total_bounds)
 
+    one_mile = lat_lon_dist(one_mile_lat, one_mile_lon(abs(north - south) / 2))
+
     if not tight:
         west -= one_mile.x
         east += one_mile.x
-
-        # for the north/south adjustments, we need to take into account the
-        # curvature of the earth. Here we find how much we need to add to the Y
-        # access, using the mid-latitude point as an approximation.
-        # return the distance between two longitude coordinates at a given latitude
-        def lon_distance(lon1, lon2, lat):
-            return (lon2 - lon1) * math.cos(lat * math.pi / 180)
 
         compensation = 1.5 * lon_distance(west, east, (north + south) / 2) - (north - south)
         # Keep a bit more space at the bottom, an aesthetic choice

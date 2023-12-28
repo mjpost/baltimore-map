@@ -1,15 +1,19 @@
+import math
+
 from collections import namedtuple
 
 lat_lon_dist = namedtuple('lat_lon_dist', ['y', 'x'])
 
 # one mile in latitude, longitude degrees
-one_mile = lat_lon_dist(0.0144927536231884, 0.0181818181818182)
+one_mile_lat = 0.01446
+def one_mile_lon(lat):
+    return 0.0144927536231884 * math.cos(lat * math.pi / 180)
 
 # one km in latitude, longitude degrees
 one_km = lat_lon_dist(0.008983, 0.0113636)
 
 # Define a common CRS for both GeoDataFrames (replace with your desired CRS)
-common_crs = 'epsg:4326'
+common_crs = 'EPSG:4326'
 
 def rgb_to_hex(r, g, b):
     return f'#{r:02x}{g:02x}{b:02x}'
@@ -141,3 +145,38 @@ def add_title(ax, gdf_neighborhoods, place="Baltimore"):
             horizontalalignment="left",
             name="Avenir Next Condensed",
         )
+
+# for the north/south adjustments, we need to take into account the
+# curvature of the earth. Here we find how much we need to add to the Y
+# access, using the mid-latitude point as an approximation.
+# return the distance between two longitude coordinates at a given latitude
+def lon_distance(lon1, lon2, lat):
+    return (lon2 - lon1) * math.cos(lat * math.pi / 180)
+
+def scale(north, south, east, west, target_ratio=1.5):
+    """
+    Scales the map to the target ratio, while keeping the center of the map.
+    """
+
+    # Find which dimension is larger
+    height = abs(north - south)
+    width = abs(east - west)
+
+    # If the height is larger, scale the width
+    if width > height:
+        compensation = target_ratio * lon_distance(west, east, (north + south) / 2) - (north - south)
+        # Keep a bit more space at the bottom, an aesthetic choice
+        north += compensation / 2
+        south -= compensation / 2
+
+    else:
+        compensation = target_ratio * (east - west) - (east - west)
+        # Keep a bit more space at the bottom, an aesthetic choice
+        east += compensation / 2
+        west -= compensation / 2
+
+    print("Adjusted boundaries:", *map(lambda x: f"{x:.5f}", [west, south, east, north]))
+
+    return north, south, east, west
+        
+
