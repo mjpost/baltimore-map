@@ -8,20 +8,15 @@ from common import *
 
 
 # Turn on the local cache and console logging
-ox.settings.log_console = True
+ox.settings.log_console = False
 ox.settings.use_cache = True
 print(ox.__version__)
 
 
 def get_bounds(place):
-    G = ox.graph_from_place(place)
-    latitudes = [data['y'] for node, data in G.nodes(data=True)]
-    longitudes = [data['x'] for node, data in G.nodes(data=True)]
-    north = max(latitudes)
-    south = min(latitudes)
-    east = max(longitudes)
-    west = min(longitudes)
-    return north, south, east, west
+    gdf = ox.geocode_to_gdf(place)
+    bounds = gdf.total_bounds
+    return bounds
 
 
 def main(args):
@@ -29,7 +24,7 @@ def main(args):
     placename = place.split(',')[0].replace(" ", "").lower()
 
     # get the bounding box of a city from ox
-    north, south, east, west = get_bounds(args.place)
+    west, south, east, north = get_bounds(args.place)
 
     one_mile = lat_lon_dist(one_mile_lat, one_mile_lon(abs(north - south) / 2))
 
@@ -41,15 +36,16 @@ def main(args):
     north, south, east, west = scale(north, south, east, west, target_ratio=1.5)
 
     G = ox.graph_from_bbox(north, south, east, west, network_type="drive", retain_all=True)
-
     gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
     gdf_streets = gdf_streets.to_crs(common_crs)
     gdf_streets["color"] = street_color
 
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
-    tags = {"natural": "water"}
-    gdf_water = ox.features.features_from_place(place, tags=tags)
+    tags = {"natural": ["water", "bay", "strait"]}
+    gdf_water = ox.features.features_from_bbox(north, south, east, west, tags=tags)
     gdf_water.crs = common_crs
+    # Remove all points from the water data
+    gdf_water = gdf_water[gdf_water.geometry.type.isin(['Polygon', 'MultiPolygon'])]    
 
     # schools, but just the buildings
     # tags = {"building": "school", "landuse": "cemetery"}
@@ -58,7 +54,7 @@ def main(args):
 
     try:
         tags = {"leisure": ["park", "garden"]}
-        gdf_park = ox.features.features_from_place(place, tags=tags)
+        gdf_park = ox.features.features_from_bbox(north, south, east, west, tags=tags)
         # remove all elements of type node
         gdf_park = gdf_park[gdf_park["geometry"].apply(lambda x: x.geom_type != "Point")]
         gdf_park.crs = common_crs
@@ -67,7 +63,7 @@ def main(args):
 
     try:
         tags = {'boundaries': "administrative", "admin_level": "10"}
-        gdf_neighborhoods = ox.features.features_from_place(place, tags=tags)
+        gdf_neighborhoods = ox.features.features_from_bbox(north, south, east, west, tags=tags)
         gdf_neighborhoods.crs = common_crs
 
         # remove all points 

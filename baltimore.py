@@ -18,7 +18,7 @@ from common import *
 
 
 # Turn on the local cache and console logging
-ox.settings.log_console = True
+ox.settings.log_console = False
 ox.settings.use_cache = True
 
 
@@ -44,6 +44,9 @@ def init_baltimore(tight=False):
     if not tight:
         west -= one_mile.x
         east += one_mile.x
+
+        # scale() distributes the compensation evenly. For Baltimore, we want more on the bottom.
+        # north, south, east, west = scale(north, south, east, west, target_ratio=1.5)
 
         compensation = 1.5 * lon_distance(west, east, (north + south) / 2) - (north - south)
         # Keep a bit more space at the bottom, an aesthetic choice
@@ -102,7 +105,6 @@ def main(args):
     tags = {"natural": "water"}
     gdf_water = ox.features.features_from_bbox(north, south, east, west, tags=tags)
     gdf_water.crs = common_crs
-
     # Remove all points from the water data
     gdf_water = gdf_water[gdf_water.geometry.type.isin(['Polygon', 'MultiPolygon'])]
 
@@ -147,6 +149,7 @@ def main(args):
     ax.yaxis.set_ticks_position("none")
     
     # draw gridlines every one mile
+    one_mile = lat_lon_dist(one_mile_lat, one_mile_lon(abs(north - south) / 2))
     ax.xaxis.set_major_locator(plt.MultipleLocator(one_mile.x))
     ax.yaxis.set_major_locator(plt.MultipleLocator(one_mile.y))
 

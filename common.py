@@ -1,3 +1,4 @@
+import sys
 import math
 
 from collections import namedtuple
@@ -151,7 +152,8 @@ def add_title(ax, gdf_neighborhoods, place="Baltimore"):
 # access, using the mid-latitude point as an approximation.
 # return the distance between two longitude coordinates at a given latitude
 def lon_distance(lon1, lon2, lat):
-    return (lon2 - lon1) * math.cos(lat * math.pi / 180)
+    return abs(lon2 - lon1) * math.cos(lat * math.pi / 180)
+
 
 def scale(north, south, east, west, target_ratio=1.5):
     """
@@ -160,22 +162,21 @@ def scale(north, south, east, west, target_ratio=1.5):
 
     # Find which dimension is larger
     height = abs(north - south)
-    width = abs(east - west)
+    width = lon_distance(west, east, (north + south) / 2)
 
-    # If the height is larger, scale the width
-    if width > height:
-        compensation = target_ratio * lon_distance(west, east, (north + south) / 2) - (north - south)
-        # Keep a bit more space at the bottom, an aesthetic choice
+    if height / width < target_ratio:
+        # Scale the height
+        compensation = target_ratio * width - height
         north += compensation / 2
         south -= compensation / 2
 
     else:
-        compensation = target_ratio * (east - west) - (east - west)
-        # Keep a bit more space at the bottom, an aesthetic choice
+        # Scale the width
+        compensation = (height - target_ratio * width) / target_ratio
         east += compensation / 2
         west -= compensation / 2
 
-    print("Adjusted boundaries:", *map(lambda x: f"{x:.5f}", [west, south, east, north]))
+    print("Adjusted boundaries:", *map(lambda x: f"{x:.5f}", [west, south, east, north]), file=sys.stderr)
 
     return north, south, east, west
         
