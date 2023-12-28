@@ -13,7 +13,8 @@ ox.settings.use_cache = True
 print(ox.__version__)
 
 
-def get_bounds(G):
+def get_bounds(place):
+    G = ox.graph_from_place(place)
     latitudes = [data['y'] for node, data in G.nodes(data=True)]
     longitudes = [data['x'] for node, data in G.nodes(data=True)]
     north = max(latitudes)
@@ -28,8 +29,7 @@ def main(args):
     placename = place.split(',')[0].replace(" ", "").lower()
 
     # get the bounding box of a city from ox
-    G = ox.graph_from_place(place)
-    north, south, east, west = get_bounds(G)
+    north, south, east, west = get_bounds(args.place)
 
     one_mile = lat_lon_dist(one_mile_lat, one_mile_lon(abs(north - south) / 2))
 
