@@ -39,7 +39,7 @@ water_alpha = 1
 park_alpha = 1
 
 ## test: https://colorbrewer2.org/#type=sequential&scheme=Greens&n=9
-park_green = "#78c679"
+park_green = "#41ab5d"
 water_blue = "#4eb3d3"
 bike_orange = "#fe982a"
 
