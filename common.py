@@ -35,8 +35,13 @@ ghost_color = bike_orange  # "black"  # "#721613"
 water_blue = "#1c4966"
 park_green = "#1a5b07"  # mine
 #park_green = "#b9e5a1"  # google
-water_alpha = 0.4
-park_alpha = 0.6
+water_alpha = 1
+park_alpha = 1
+
+## test: https://colorbrewer2.org/#type=sequential&scheme=Greens&n=9
+park_green = "#78c679"
+water_blue = "#4eb3d3"
+bike_orange = "#fe982a"
 
 ## wandrer colors (lighter, v4)
 # park_green = "#e0eed2"  # before transparency: "#c1e1a7"
