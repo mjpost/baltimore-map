@@ -26,35 +26,34 @@ street_color = "#dddddd"
 cemetery_gray = "#666666"
 grid_color = "#cccccc"
 
-# wandrer
-park_green = "#e0eed2"  # before transparency: "#c1e1a7"
-water_blue = "#c6e2f3"  # before transparency: "#8bccec"
-
-## v3
-# water_blue = rgb_to_hex(4, 53, 108)
-# park_green = "#1a5b07"  # mine
-#park_green = "#b9e5a1"  # google
 bike_orange = "orange"
-
 ghost_color = bike_orange  # "black"  # "#721613"
 
-# water_blue = "blue"
-# park_green = "green"
-# bike_orange = "orange"
+## starker colors (from v1, need lower alpha)
+water_blue = rgb_to_hex(4, 53, 108)
+park_green = "#1a5b07"  # mine
+#park_green = "#b9e5a1"  # google
+water_alpha = 0.4
+park_alpha = 0.4
 
-## old veriants
-# what is (43, 101, 50) in hex?
-#   # rgb_to_hex(11, 82, 136)  # "#2c5c98"
+## wandrer colors (lighter, v4)
+# park_green = "#e0eed2"  # before transparency: "#c1e1a7"
+# water_blue = "#c6e2f3"  # before transparency: "#8bccec"
+
 
 ## much lighter version (could turn off alpha)
 ## This looks good when you have starker neighborhood boundaries
 # water_blue = "#b0cae3"
 # park_green = "#c2dd9a"
 
-# VISIT BALTIMORE
+## VISIT BALTIMORE colors
 # water_blue = "#14275b"
 # park_green = "#2d6a76"
 # bike_orange = "#e44b25"
+
+## old variants
+# what is (43, 101, 50) in hex?
+#   # rgb_to_hex(11, 82, 136)  # "#2c5c98"
 
 # Baltimore City connect color scheme
 baltimore_city_colors = {
