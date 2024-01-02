@@ -22,6 +22,8 @@ def rgb_to_hex(r, g, b):
 # Define a number of colors
 bg_color = "white"
 hood_color = "white"
+hood_line_color = "#444444"
+hood_line_width = 1.5
 street_color = "#dddddd"
 cemetery_gray = "#666666"
 grid_color = "#cccccc"
@@ -34,7 +36,7 @@ water_blue = rgb_to_hex(4, 53, 108)
 park_green = "#1a5b07"  # mine
 #park_green = "#b9e5a1"  # google
 water_alpha = 0.4
-park_alpha = 0.4
+park_alpha = 0.6
 
 ## wandrer colors (lighter, v4)
 # park_green = "#e0eed2"  # before transparency: "#c1e1a7"

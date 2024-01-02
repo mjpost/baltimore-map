@@ -165,7 +165,7 @@ def main(args):
     gdf_park.plot(ax=ax, facecolor=park_green, alpha=park_alpha)
     gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, ec="#444444", linewidth=1, alpha=0.3)
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=ghost_color, alpha=1)
-    gdf_neighborhoods.plot(ax=ax, facecolor='none', ec="#AAAAAA", linewidth=2, alpha=0.9, zorder=10)
+    gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
 
     # Print the name of each neighborhood on the map.
     # These print at the center of the neighborhood polygon, which isn't always
