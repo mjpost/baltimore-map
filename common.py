@@ -32,7 +32,7 @@ bike_orange = "orange"
 ghost_color = bike_orange  # "black"  # "#721613"
 
 ## starker colors (from v1, need lower alpha)
-water_blue = rgb_to_hex(4, 53, 108)
+water_blue = "#1c4966"
 park_green = "#1a5b07"  # mine
 #park_green = "#b9e5a1"  # google
 water_alpha = 0.4
@@ -41,7 +41,6 @@ park_alpha = 0.6
 ## wandrer colors (lighter, v4)
 # park_green = "#e0eed2"  # before transparency: "#c1e1a7"
 # water_blue = "#c6e2f3"  # before transparency: "#8bccec"
-
 
 ## much lighter version (could turn off alpha)
 ## This looks good when you have starker neighborhood boundaries
