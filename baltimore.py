@@ -180,10 +180,10 @@ def main(args):
             horizontalalignment="center",
             verticalalignment="center",
             fontsize=6,
-            color="#666666",
+            color="#222222",
             weight=800,
             # name="Georgia",
-            name="Helvetica",
+            name="Avenir Next",
             # name="Rockwell",
             # name="Copperplate",  # no, too much
             # name="Phosphate",

@@ -23,25 +23,25 @@ def rgb_to_hex(r, g, b):
 bg_color = "white"
 hood_color = "white"
 hood_line_color = "#444444"
-hood_line_width = 1.5
+hood_line_width = 2.5
 street_color = "#dddddd"
 cemetery_gray = "#666666"
 grid_color = "#cccccc"
 
-bike_orange = "orange"
-ghost_color = bike_orange  # "black"  # "#721613"
+# bike_orange = "orange"
+# ghost_color = bike_orange  # "black"  # "#721613"
 
 ## starker colors (from v1, need lower alpha)
-water_blue = "#1c4966"
-park_green = "#1a5b07"  # mine
-#park_green = "#b9e5a1"  # google
-water_alpha = 1
-park_alpha = 1
+# water_blue = "#1c4966"
+# park_green = "#1a5b07"  # mine
+# water_alpha = 0.5
+# park_alpha = 0.5
 
 ## test: https://colorbrewer2.org/#type=sequential&scheme=Greens&n=9
-park_green = "#41ab5d"
-water_blue = "#4eb3d3"
+# park_green = "#41ab5d"
+# water_blue = "#4eb3d3"
 bike_orange = "#fe982a"
+ghost_color = bike_orange  # "black"  # "#721613"
 
 ## wandrer colors (lighter, v4)
 # park_green = "#e0eed2"  # before transparency: "#c1e1a7"
@@ -49,8 +49,10 @@ bike_orange = "#fe982a"
 
 ## much lighter version (could turn off alpha)
 ## This looks good when you have starker neighborhood boundaries
-# water_blue = "#b0cae3"
-# park_green = "#c2dd9a"
+water_blue = "#b0cae3"
+park_green = "#c2dd9a"
+water_alpha = 1
+park_alpha = 1
 
 ## VISIT BALTIMORE colors
 # water_blue = "#14275b"
