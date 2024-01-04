@@ -40,7 +40,7 @@ grid_color = "#cccccc"
 ## test: https://colorbrewer2.org/#type=sequential&scheme=Greens&n=9
 # park_green = "#41ab5d"
 # water_blue = "#4eb3d3"
-bike_orange = "#fe982a"
+bike_orange = "#ff9300"
 ghost_color = bike_orange  # "black"  # "#721613"
 
 ## wandrer colors (lighter, v4)
