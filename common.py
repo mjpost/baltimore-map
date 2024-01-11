@@ -52,7 +52,11 @@ ghost_color = bike_orange  # "black"  # "#721613"
 water_blue = "#b0cae3"
 park_green = "#c2dd9a"
 water_alpha = 1
-park_alpha = 1
+park_alpha = 0.75
+
+# future maps
+water_blue = "#5891ac"  # love this blue
+park_green = "#7d9f7d"  # decent green
 
 ## VISIT BALTIMORE colors
 # water_blue = "#14275b"
