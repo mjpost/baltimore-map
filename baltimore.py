@@ -167,6 +167,11 @@ def main(args):
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=ghost_color, alpha=1)
     gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
 
+    # Plot just the city boundary
+    # city = ox.geocode_to_gdf("Baltimore, MD")
+    # city_proj = ox.project_gdf(city, to_crs=common_crs)
+    # city_proj.plot(ax=ax, facecolor="none", ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
+
     # Print the name of each neighborhood on the map.
     # These print at the center of the neighborhood polygon, which isn't always
     # correct. So we use a dictionary of offsets to shift them around a bit.
