@@ -185,7 +185,7 @@ def main(args):
             horizontalalignment="center",
             verticalalignment="center",
             fontsize=6,
-            color="#222222",
+            color=text_color,
             weight=800,
             # name="Georgia",
             name="Avenir Next",

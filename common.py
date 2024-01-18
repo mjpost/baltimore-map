@@ -20,13 +20,14 @@ def rgb_to_hex(r, g, b):
     return f'#{r:02x}{g:02x}{b:02x}'
 
 # Define a number of colors
-bg_color = "white"
+bg_color = "black"
 hood_color = "white"
-hood_line_color = "#444444"
+hood_line_color = "#cccccc"
 hood_line_width = 2.5
-street_color = "#dddddd"
-cemetery_gray = "#666666"
-grid_color = "#cccccc"
+street_color = "#444444"
+cemetery_gray = "#aaaaaa"
+grid_color = "#888888"
+text_color = "#eeeeee"
 
 # bike_orange = "orange"
 # ghost_color = bike_orange  # "black"  # "#721613"
