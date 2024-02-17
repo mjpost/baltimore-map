@@ -58,7 +58,7 @@ def init_baltimore(tight=False):
     # Using a network type of "all_private" will get all the alleys etc
     # It also makes the boundaries with water a lot fuzzier since they
     # are overlaid.
-    G = ox.graph_from_bbox(north, south, east, west, network_type="drive", retain_all=True)
+    G = ox.graph_from_bbox(bbox=(north, south, east, west), network_type="drive", retain_all=True)
 
     # Convert to a GeoDataFrame and project to a common CRS
     gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
@@ -83,7 +83,7 @@ def main(args):
         'bicycle': 'designated',
     }
     # tags = {"network": "lcn", "route": "bicycle"}
-    gdf_cycleways = ox.features.features_from_bbox(north, south, east, west, tags=tags)
+    gdf_cycleways = ox.features.features_from_bbox(bbox=(north, south, east, west), tags=tags)
     # remove points
     gdf_cycleways = gdf_cycleways[gdf_cycleways.geometry.type.isin(['LineString', 'MultiLineString'])]
     gdf_cycleways.crs = common_crs
@@ -96,14 +96,14 @@ def main(args):
         'cycleway:both': True,
         'bicycle': ['yes', 'designated'],
     }
-    gdf_bikeable = ox.features.features_from_bbox(north, south, east, west, tags=tags)
+    gdf_bikeable = ox.features.features_from_bbox(bbox=(north, south, east, west), tags=tags)
     # remove points
     gdf_bikeable = gdf_bikeable[gdf_bikeable.geometry.type.isin(['LineString', 'MultiLineString'])]
     gdf_bikeable.crs = common_crs    
 
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
     tags = {"natural": "water"}
-    gdf_water = ox.features.features_from_bbox(north, south, east, west, tags=tags)
+    gdf_water = ox.features.features_from_bbox(bbox=(north, south, east, west), tags=tags)
     gdf_water.crs = common_crs
     # Remove all points from the water data
     gdf_water = gdf_water[gdf_water.geometry.type.isin(['Polygon', 'MultiPolygon'])]
@@ -121,7 +121,7 @@ def main(args):
 
     # Baltimore is also somewhat distinct in having good annotations for ghost bikes...
     tags = {"memorial": "ghost_bike"}
-    gdf_ghost = ox.features_from_bbox(north, south, east, west, tags=tags)
+    gdf_ghost = ox.features_from_bbox(bbox=(north, south, east, west), tags=tags)
     gdf_ghost.crs = common_crs
 
     # ...and drinking fountains
