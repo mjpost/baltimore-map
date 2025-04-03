@@ -14,15 +14,19 @@ import random
 import osmnx as ox
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import logging
 
 from common import *
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 # Turn on the local cache and console logging
 ox.settings.log_console = False
 ox.settings.use_cache = True
 
-def init_baltimore(tight=False):
+def init_baltimore(tight=False, color_method="random"):
     # The neighborhoods data can be retrieved from Open Street Map.
     # However, for Baltimore at least, this data is incomplete. Instead, we
     # load the data from a geojson file provided by the City of Baltimore.
@@ -33,9 +37,26 @@ def init_baltimore(tight=False):
     gdf_neighborhoods = gpd.read_file("data/Baltimore.geojson")
     gdf_neighborhoods.crs = common_crs
 
-    random.seed(14)
-    city_mosaic = list(baltimore_city_colors.values())
-    gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(city_mosaic), axis=1)
+    if color_method == "random":
+        logger.info("Using random coloring for neighborhoods")
+
+        random.seed(14)
+        colors = list(baltimore_visit_colors.values())
+        gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(colors), axis=1)
+
+    elif color_method == "greedy":
+        logger.info("Using greedy coloring for neighborhoods")
+
+        from networkx.algorithms.coloring import greedy_color
+
+        G = build_adjacency_graph(gdf_neighborhoods)
+
+        # Step 2: Apply graph coloring
+        color_map = greedy_color(G, strategy='largest_first')  # or 'random_sequential', etc.
+
+        # Step 3: Assign to GeoDataFrame
+        color_list = list(baltimore_visit_colors.values())  # Make sure this has at least max(color_map.values())+1 entries
+        gdf_neighborhoods['color'] = gdf_neighborhoods.index.map(lambda idx: color_list[color_map[idx]])
 
     # adjust the lat/long boundaries to get to a 1.5 height:width ratio
     west, south, east, north = gdf_neighborhoods.total_bounds
@@ -70,11 +91,53 @@ def init_baltimore(tight=False):
 
     return gdf_neighborhoods, gdf_streets, west, south, east, north
 
+
+import networkx as nx
+
+# Step 1: Build adjacency graph
+def build_adjacency_graph(gdf):
+    G = nx.Graph()
+    for idx, geom in gdf.geometry.items():
+        G.add_node(idx)
+        
+    for i, geom_i in gdf.geometry.items():
+        for j, geom_j in gdf.geometry.items():
+            if i >= j:
+                continue
+            if geom_i.intersects(geom_j):  # or .intersects() if you want more aggressive adjacency
+                G.add_edge(i, j)
+    return G
+
+
+import numpy as np
+from matplotlib.collections import LineCollection
+
+def draw_nautical_lines(ax, bounds, spacing=0.01, angle=45, color='white', alpha=0.2, linewidth=0.5):
+    """Draws diagonal lines at a given angle over specified bounds (xmin, ymin, xmax, ymax)."""
+    xmin, ymin, xmax, ymax = bounds
+
+    # Convert angle to radians and get direction vector
+    angle_rad = np.deg2rad(angle)
+    dx = spacing / np.cos(angle_rad)
+    dy = spacing / np.sin(angle_rad)
+
+    lines = []
+    x = xmin - (ymax - ymin)
+    while x < xmax + (ymax - ymin):
+        start = (x, ymin)
+        end = (x + (ymax - ymin) / np.tan(angle_rad), ymax)
+        lines.append([start, end])
+        x += dx
+
+    line_collection = LineCollection(lines, colors=color, linewidths=linewidth, alpha=alpha)
+    ax.add_collection(line_collection)
+
+
 def main(args):
     place = "Baltimore, MD"
     placename = "baltimore"
 
-    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore()
+    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_method="greedy")
 
     # tags = {"highway": "cycleway", "route": "bicycle"}
     tags = {
@@ -167,15 +230,17 @@ def main(args):
     gdf_streets.plot(ax=ax, ec=street_color, linewidth=1.5, alpha=0.5, zorder=1)
     gdf_cycleways.plot(ax=ax, ec=bike_orange, linewidth=5, alpha=0.3)
     gdf_bikeable.plot(ax=ax, ec=bike_orange, linewidth=1, alpha=1, linestyle="--")
+
     gdf_water.plot(ax=ax, facecolor=water_blue, alpha=water_alpha)
+    # draw_nautical_lines(ax, ax.get_xlim() + ax.get_ylim(), spacing=0.01, angle=45)
+
     gdf_park.plot(ax=ax, facecolor=park_green, alpha=park_alpha)
     gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, ec="#444444", linewidth=1, alpha=0.3)
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=ghost_color, alpha=1)
 
     # gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
 
-    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], ec=hood_line_color, linewidth=hood_line_width, alpha=0.3, zorder=10)
-
+    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], ec=hood_line_color, linewidth=hood_line_width, alpha=.4, zorder=10)
 
     # Plot just the city boundary
     # city = ox.geocode_to_gdf("Baltimore, MD")
@@ -195,7 +260,8 @@ def main(args):
             horizontalalignment="center",
             verticalalignment="center",
             fontsize=6,
-            color="#222222",
+            # color="#222222",
+            color="#dddddd",
             weight=800,
             # name="Georgia",
             name="Avenir Next",

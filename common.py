@@ -82,6 +82,16 @@ baltimore_city_colors = {
     "blue": "#a0cce8",
 }
 
+# https://x.com/mjpost/status/1731471267373658184/photo/1
+baltimore_visit_colors = {
+    "green": rgb_to_hex(0, 109, 116),
+    "teal": rgb_to_hex(0, 195, 228),
+    "blue": rgb_to_hex(26, 55, 131),
+    "orange": rgb_to_hex(254, 53, 0),
+    "white": rgb_to_hex(215, 211, 235),
+    "gray": rgb_to_hex(216, 209, 203),
+}
+
 neighborhood_offsets = {
     "Holabird Industrial Park": (0, +0.003),
     "Locust Point Industrial Area": (0.001, -0.0035),
