@@ -57,7 +57,7 @@ ghost_color = bike_orange  # "black"  # "#721613"
 water_blue = "#b0cae3"
 park_green = "#c2dd9a"
 water_alpha = 1
-park_alpha = 0.75
+park_alpha = 1
 
 # future maps
 water_blue = "#5891ac"  # love this blue

@@ -10,6 +10,7 @@ I manually post-edited with a title, legend, and other information.
 """
 
 import math
+import random
 import osmnx as ox
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -21,7 +22,6 @@ from common import *
 ox.settings.log_console = False
 ox.settings.use_cache = True
 
-
 def init_baltimore(tight=False):
     # The neighborhoods data can be retrieved from Open Street Map.
     # However, for Baltimore at least, this data is incomplete. Instead, we
@@ -32,6 +32,10 @@ def init_baltimore(tight=False):
     # gdf_neighborhoods = ox.features.features_from_place(place, tags=tags)
     gdf_neighborhoods = gpd.read_file("data/Baltimore.geojson")
     gdf_neighborhoods.crs = common_crs
+
+    random.seed(14)
+    city_mosaic = list(baltimore_city_colors.values())
+    gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(city_mosaic), axis=1)
 
     # adjust the lat/long boundaries to get to a 1.5 height:width ratio
     west, south, east, north = gdf_neighborhoods.total_bounds
@@ -46,7 +50,7 @@ def init_baltimore(tight=False):
         east += one_mile.x
 
         # scale() distributes the compensation evenly. For Baltimore, we want more on the bottom.
-        # north, south, east, west = scale(north, south, east, west, target_ratio=1.5)
+        # west, south, east, north = scale(west, south, east, north, target_ratio=1.5)
 
         compensation = 1.5 * lon_distance(west, east, (north + south) / 2) - (north - south)
         # Keep a bit more space at the bottom, an aesthetic choice
@@ -58,19 +62,19 @@ def init_baltimore(tight=False):
     # Using a network type of "all_private" will get all the alleys etc
     # It also makes the boundaries with water a lot fuzzier since they
     # are overlaid.
-    G = ox.graph_from_bbox(north, south, east, west, network_type="drive", retain_all=True)
+    G = ox.graph_from_bbox((west, south, east, north), network_type="drive", retain_all=True)
 
     # Convert to a GeoDataFrame and project to a common CRS
     gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
     gdf_streets = gdf_streets.to_crs(common_crs)
 
-    return gdf_neighborhoods, gdf_streets, north, south, east, west
+    return gdf_neighborhoods, gdf_streets, west, south, east, north
 
 def main(args):
     place = "Baltimore, MD"
     placename = "baltimore"
 
-    gdf_neighborhoods, gdf_streets, north, south, east, west = init_baltimore()
+    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore()
 
     # tags = {"highway": "cycleway", "route": "bicycle"}
     tags = {
@@ -83,7 +87,7 @@ def main(args):
         'bicycle': 'designated',
     }
     # tags = {"network": "lcn", "route": "bicycle"}
-    gdf_cycleways = ox.features.features_from_bbox(north, south, east, west, tags=tags)
+    gdf_cycleways = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
     # remove points
     gdf_cycleways = gdf_cycleways[gdf_cycleways.geometry.type.isin(['LineString', 'MultiLineString'])]
     gdf_cycleways.crs = common_crs
@@ -96,14 +100,14 @@ def main(args):
         'cycleway:both': True,
         'bicycle': ['yes', 'designated'],
     }
-    gdf_bikeable = ox.features.features_from_bbox(north, south, east, west, tags=tags)
+    gdf_bikeable = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
     # remove points
     gdf_bikeable = gdf_bikeable[gdf_bikeable.geometry.type.isin(['LineString', 'MultiLineString'])]
     gdf_bikeable.crs = common_crs    
 
     # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
     tags = {"natural": "water"}
-    gdf_water = ox.features.features_from_bbox(north, south, east, west, tags=tags)
+    gdf_water = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
     gdf_water.crs = common_crs
     # Remove all points from the water data
     gdf_water = gdf_water[gdf_water.geometry.type.isin(['Polygon', 'MultiPolygon'])]
@@ -119,9 +123,11 @@ def main(args):
     gdf_park = gdf_park[gdf_park["geometry"].apply(lambda x: x.geom_type != "Point")]
     gdf_park.crs = common_crs
 
+
+
     # Baltimore is also somewhat distinct in having good annotations for ghost bikes...
     tags = {"memorial": "ghost_bike"}
-    gdf_ghost = ox.features_from_bbox(north, south, east, west, tags=tags)
+    gdf_ghost = ox.features_from_bbox(bbox=(west, south, east, north), tags=tags)
     gdf_ghost.crs = common_crs
 
     # ...and drinking fountains
@@ -165,7 +171,11 @@ def main(args):
     gdf_park.plot(ax=ax, facecolor=park_green, alpha=park_alpha)
     gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, ec="#444444", linewidth=1, alpha=0.3)
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=ghost_color, alpha=1)
-    gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
+
+    # gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
+
+    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], ec=hood_line_color, linewidth=hood_line_width, alpha=0.3, zorder=10)
+
 
     # Plot just the city boundary
     # city = ox.geocode_to_gdf("Baltimore, MD")
