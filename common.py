@@ -63,6 +63,12 @@ park_alpha = 1
 water_blue = "#5891ac"  # love this blue
 park_green = "#7d9f7d"  # decent green
 
+# from ChatGPT 2025-04-03
+water_blue = "#6c9fbf"
+park_green = "#7fa174"
+water_alpha = 1
+park_alpha = 1
+
 ## VISIT BALTIMORE colors
 # water_blue = "#14275b"
 # park_green = "#2d6a76"

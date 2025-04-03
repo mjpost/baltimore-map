@@ -37,12 +37,31 @@ def init_baltimore(tight=False, color_method="random"):
     gdf_neighborhoods = gpd.read_file("data/Baltimore.geojson")
     gdf_neighborhoods.crs = common_crs
 
+    color_list = list(baltimore_visit_colors.values())
+
     if color_method == "random":
         logger.info("Using random coloring for neighborhoods")
 
         random.seed(14)
-        colors = list(baltimore_visit_colors.values())
-        gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(colors), axis=1)
+        gdf_neighborhoods["color"] = gdf_neighborhoods.apply(lambda x: random.choice(color_list), axis=1)
+
+    elif color_method == "constrained":
+        adj_map = {i: set() for i in gdf_neighborhoods.index}
+        for i, geom_i in gdf_neighborhoods.geometry.items():
+            for j, geom_j in gdf_neighborhoods.geometry.items():
+                if i != j and geom_i.intersects(geom_j):
+                    adj_map[i].add(j)
+
+        assigned_colors = {}
+        for idx in gdf_neighborhoods.index:
+            neighbor_colors = {assigned_colors[j] for j in adj_map[idx] if j in assigned_colors}
+            available_colors = [c for c in color_list if c not in neighbor_colors]
+            if not available_colors:
+                # fallback if palette too small
+                available_colors = color_list
+            assigned_colors[idx] = random.choice(available_colors)
+
+        gdf_neighborhoods["color"] = gdf_neighborhoods.index.map(assigned_colors.get)
 
     elif color_method == "greedy":
         logger.info("Using greedy coloring for neighborhoods")
@@ -55,8 +74,7 @@ def init_baltimore(tight=False, color_method="random"):
         color_map = greedy_color(G, strategy='largest_first')  # or 'random_sequential', etc.
 
         # Step 3: Assign to GeoDataFrame
-        color_list = list(baltimore_visit_colors.values())  # Make sure this has at least max(color_map.values())+1 entries
-        gdf_neighborhoods['color'] = gdf_neighborhoods.index.map(lambda idx: color_list[color_map[idx]])
+        gdf_neighborhoods['color'] = gdf_neighborhoods.index.map(lambda idx: color_list[color_map[idx] % len(color_list)])
 
     # adjust the lat/long boundaries to get to a 1.5 height:width ratio
     west, south, east, north = gdf_neighborhoods.total_bounds
@@ -137,7 +155,7 @@ def main(args):
     place = "Baltimore, MD"
     placename = "baltimore"
 
-    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_method="greedy")
+    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_method="constrained")
 
     # tags = {"highway": "cycleway", "route": "bicycle"}
     tags = {
@@ -240,7 +258,7 @@ def main(args):
 
     # gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
 
-    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], ec=hood_line_color, linewidth=hood_line_width, alpha=.4, zorder=10)
+    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], ec=hood_line_color, linewidth=hood_line_width, alpha=.3, zorder=0)
 
     # Plot just the city boundary
     # city = ox.geocode_to_gdf("Baltimore, MD")
@@ -260,8 +278,8 @@ def main(args):
             horizontalalignment="center",
             verticalalignment="center",
             fontsize=6,
-            # color="#222222",
-            color="#dddddd",
+            color="#222222",
+            # color="#dddddd",
             weight=800,
             # name="Georgia",
             name="Avenir Next",
