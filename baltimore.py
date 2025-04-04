@@ -303,7 +303,7 @@ def main(args):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-file", type=str, default="visit.yaml",)
+    parser.add_argument("--data-file", "-d", type=str, default="visit.yaml",)
     args = parser.parse_args()
 
     main(args)
