@@ -19,20 +19,6 @@ common_crs = 'EPSG:4326'
 def rgb_to_hex(r, g, b):
     return f'#{r:02x}{g:02x}{b:02x}'
 
-# white on very pale green
-# bg_color = "#eef0ed"
-# street_color = "white"
-
-# white background
-# bg_color = "white"
-# street_color = "#dddddd"
-
-# hood_color = "white"
-# hood_line_color = "#444444"
-# hood_line_width = 2.5
-# cemetery_gray = "#666666"
-# grid_color = "#cccccc"
-
 # bike_orange = "orange"
 # ghost_color = bike_orange  # "black"  # "#721613"
 

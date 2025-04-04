@@ -162,6 +162,7 @@ def main(args):
     colors = data["colors"]
     alphas = data["alphas"]
     zs = data["zorders"]
+    sizes = data["sizes"]
 
     color_list = list(colors["neighborhood"].values())
 
@@ -266,7 +267,7 @@ def main(args):
 
     # gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
 
-    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], ec=hood_line_color, linewidth=hood_line_width, alpha=alphas["neighborhood"], zorder=zs["neighborhoods"])
+    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], ec=colors["hood_line"], linewidth=sizes["hood_line_width"], alpha=alphas["neighborhood"], zorder=zs["neighborhoods"])
 
     # Plot just the city boundary
     # city = ox.geocode_to_gdf("Baltimore, MD")
