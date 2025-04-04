@@ -163,10 +163,11 @@ def main(args):
     alphas = data["alphas"]
     zs = data["zorders"]
     sizes = data["sizes"]
+    color_method = data.get("color_method", "random")
 
     color_list = list(colors["neighborhood"].values())
 
-    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_list=color_list, color_method="constrained")
+    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_list=color_list, color_method=color_method)
 
     # tags = {"highway": "cycleway", "route": "bicycle"}
     tags = {
