@@ -255,9 +255,11 @@ def main(args):
         spine.set_visible(False)
 
     # plot the streets, neighborhoods, water, parks, and cemeteries
-    gdf_streets.plot(ax=ax, ec=colors["street"], linewidth=1.5, alpha=0.5, zorder=zs["streets"])
-    gdf_cycleways.plot(ax=ax, ec=colors["bike_lane"], linewidth=5, alpha=0.3)
-    gdf_bikeable.plot(ax=ax, ec=colors["bike_lane"], linewidth=1, alpha=1, linestyle="--")
+    gdf_streets.plot(ax=ax, ec=colors["street"], linewidth=sizes["street_line_width"], alpha=alphas["street"], zorder=zs["streets"])
+
+    # cycleways get plotted quite thick and blurry, with the darker lane on top of them
+    gdf_cycleways.plot(ax=ax, ec=colors["bike_lane"], linewidth=sizes["cycleway_line_width"], alpha=alphas["cycleway"])
+    gdf_bikeable.plot(ax=ax, ec=colors["bike_lane"], linewidth=sizes["bike_lane_line_width"], alpha=alphas["bike_lane"], linestyle="--")
 
     gdf_water.plot(ax=ax, facecolor=colors["water"], alpha=alphas["water"])
     # draw_nautical_lines(ax, ax.get_xlim() + ax.get_ylim(), spacing=0.01, angle=45)
