@@ -20,18 +20,18 @@ def rgb_to_hex(r, g, b):
     return f'#{r:02x}{g:02x}{b:02x}'
 
 # white on very pale green
-bg_color = "#eef0ed"
-street_color = "white"
+# bg_color = "#eef0ed"
+# street_color = "white"
 
 # white background
 # bg_color = "white"
 # street_color = "#dddddd"
 
-hood_color = "white"
-hood_line_color = "#444444"
-hood_line_width = 2.5
-cemetery_gray = "#666666"
-grid_color = "#cccccc"
+# hood_color = "white"
+# hood_line_color = "#444444"
+# hood_line_width = 2.5
+# cemetery_gray = "#666666"
+# grid_color = "#cccccc"
 
 # bike_orange = "orange"
 # ghost_color = bike_orange  # "black"  # "#721613"
@@ -45,8 +45,8 @@ grid_color = "#cccccc"
 ## test: https://colorbrewer2.org/#type=sequential&scheme=Greens&n=9
 # park_green = "#41ab5d"
 # water_blue = "#4eb3d3"
-bike_orange = "#ff9300"
-ghost_color = bike_orange  # "black"  # "#721613"
+# bike_orange = "#ff9300"
+# ghost_color = bike_orange  # "black"  # "#721613"
 
 ## wandrer colors (lighter, v4)
 # park_green = "#e0eed2"  # before transparency: "#c1e1a7"
@@ -54,20 +54,20 @@ ghost_color = bike_orange  # "black"  # "#721613"
 
 ## much lighter version (could turn off alpha)
 ## This looks good when you have starker neighborhood boundaries
-water_blue = "#b0cae3"
-park_green = "#c2dd9a"
-water_alpha = 1
-park_alpha = 1
+# water_blue = "#b0cae3"
+# park_green = "#c2dd9a"
+# water_alpha = 1
+# park_alpha = 1
 
 # future maps
-water_blue = "#5891ac"  # love this blue
-park_green = "#7d9f7d"  # decent green
+# water_blue = "#5891ac"  # love this blue
+# park_green = "#7d9f7d"  # decent green
 
-# from ChatGPT 2025-04-03
-water_blue = "#6c9fbf"
-park_green = "#7fa174"
-water_alpha = 1
-park_alpha = 1
+# # from ChatGPT 2025-04-03
+# water_blue = "#6c9fbf"
+# park_green = "#7fa174"
+# water_alpha = 1
+# park_alpha = 1
 
 ## VISIT BALTIMORE colors
 # water_blue = "#14275b"
@@ -78,25 +78,6 @@ park_alpha = 1
 # what is (43, 101, 50) in hex?
 #   # rgb_to_hex(11, 82, 136)  # "#2c5c98"
 
-# Baltimore City connect color scheme
-baltimore_city_colors = {
-    "red": "#f23b33",
-    "orange": "#f7693d",
-    "yellow": "#FCEA65",  # "#fefc78",
-    "pink": "#f37196",
-    "purple": "#8d649e",
-    "blue": "#a0cce8",
-}
-
-# https://x.com/mjpost/status/1731471267373658184/photo/1
-baltimore_visit_colors = {
-    "green": rgb_to_hex(0, 109, 116),
-    "teal": rgb_to_hex(0, 195, 228),
-    "blue": rgb_to_hex(26, 55, 131),
-    "orange": rgb_to_hex(254, 53, 0),
-    "white": rgb_to_hex(215, 211, 235),
-    "gray": rgb_to_hex(216, 209, 203),
-}
 
 neighborhood_offsets = {
     "Holabird Industrial Park": (0, +0.003),

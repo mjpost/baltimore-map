@@ -9,7 +9,6 @@ I manually post-edited with a title, legend, and other information.
 © 2023 Matt Post
 """
 
-import math
 import random
 import osmnx as ox
 import geopandas as gpd
@@ -26,7 +25,7 @@ logger.setLevel(logging.INFO)
 ox.settings.log_console = False
 ox.settings.use_cache = True
 
-def init_baltimore(tight=False, color_method="random"):
+def init_baltimore(tight=False, color_list=["gray"], color_method="random"):
     # The neighborhoods data can be retrieved from Open Street Map.
     # However, for Baltimore at least, this data is incomplete. Instead, we
     # load the data from a geojson file provided by the City of Baltimore.
@@ -36,8 +35,6 @@ def init_baltimore(tight=False, color_method="random"):
     # gdf_neighborhoods = ox.features.features_from_place(place, tags=tags)
     gdf_neighborhoods = gpd.read_file("data/Baltimore.geojson")
     gdf_neighborhoods.crs = common_crs
-
-    color_list = list(baltimore_visit_colors.values())
 
     if color_method == "random":
         logger.info("Using random coloring for neighborhoods")
@@ -151,11 +148,24 @@ def draw_nautical_lines(ax, bounds, spacing=0.01, angle=45, color='white', alpha
     ax.add_collection(line_collection)
 
 
+import yaml
+
+
 def main(args):
     place = "Baltimore, MD"
     placename = "baltimore"
 
-    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_method="constrained")
+    # load colors from the yaml file
+    with open(args.data_file, "r") as f:
+        data = yaml.safe_load(f)
+
+    colors = data["colors"]
+    alphas = data["alphas"]
+    zs = data["zorders"]
+
+    color_list = list(colors["neighborhood"].values())
+
+    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_list=color_list, color_method="constrained")
 
     # tags = {"highway": "cycleway", "route": "bicycle"}
     tags = {
@@ -204,8 +214,6 @@ def main(args):
     gdf_park = gdf_park[gdf_park["geometry"].apply(lambda x: x.geom_type != "Point")]
     gdf_park.crs = common_crs
 
-
-
     # Baltimore is also somewhat distinct in having good annotations for ghost bikes...
     tags = {"memorial": "ghost_bike"}
     gdf_ghost = ox.features_from_bbox(bbox=(west, south, east, north), tags=tags)
@@ -218,14 +226,14 @@ def main(args):
 
     # Setup the figure and plot
     fig, ax = plt.subplots(figsize=(24, 36), dpi=300)
-    ax.set_facecolor(bg_color)
+    ax.set_facecolor(colors["bg"])
     fig.tight_layout(pad=0)
 
     ax.set_xlim(west, east)
     ax.set_ylim(south, north)
 
     # print the x and y axis as a faint grid
-    ax.grid(color=grid_color, linestyle="--", linewidth=0.5)
+    ax.grid(color=colors["grid"], linestyle="--", linewidth=0.5)
 
     # turn off axis labels
     ax.set_xticklabels([])
@@ -245,20 +253,20 @@ def main(args):
         spine.set_visible(False)
 
     # plot the streets, neighborhoods, water, parks, and cemeteries
-    gdf_streets.plot(ax=ax, ec=street_color, linewidth=1.5, alpha=0.5, zorder=1)
-    gdf_cycleways.plot(ax=ax, ec=bike_orange, linewidth=5, alpha=0.3)
-    gdf_bikeable.plot(ax=ax, ec=bike_orange, linewidth=1, alpha=1, linestyle="--")
+    gdf_streets.plot(ax=ax, ec=colors["street"], linewidth=1.5, alpha=0.5, zorder=zs["streets"])
+    gdf_cycleways.plot(ax=ax, ec=colors["bike_lane"], linewidth=5, alpha=0.3)
+    gdf_bikeable.plot(ax=ax, ec=colors["bike_lane"], linewidth=1, alpha=1, linestyle="--")
 
-    gdf_water.plot(ax=ax, facecolor=water_blue, alpha=water_alpha)
+    gdf_water.plot(ax=ax, facecolor=colors["water"], alpha=alphas["water"])
     # draw_nautical_lines(ax, ax.get_xlim() + ax.get_ylim(), spacing=0.01, angle=45)
 
-    gdf_park.plot(ax=ax, facecolor=park_green, alpha=park_alpha)
-    gdf_cemetery.plot(ax=ax, facecolor=cemetery_gray, ec="#444444", linewidth=1, alpha=0.3)
-    gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=ghost_color, alpha=1)
+    gdf_park.plot(ax=ax, facecolor=colors["park"], alpha=alphas["park"])
+    gdf_cemetery.plot(ax=ax, facecolor=colors["cemetery"], ec="#444444", linewidth=1, alpha=alphas["cemetery"])
+    gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=colors["ghost_bike"], alpha=alphas["ghost_bike"])
 
     # gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
 
-    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], ec=hood_line_color, linewidth=hood_line_width, alpha=.3, zorder=0)
+    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], ec=hood_line_color, linewidth=hood_line_width, alpha=alphas["neighborhood"], zorder=zs["neighborhoods"])
 
     # Plot just the city boundary
     # city = ox.geocode_to_gdf("Baltimore, MD")
@@ -278,7 +286,7 @@ def main(args):
             horizontalalignment="center",
             verticalalignment="center",
             fontsize=6,
-            color="#222222",
+            color=colors["text"],
             # color="#dddddd",
             weight=800,
             # name="Georgia",
@@ -286,7 +294,7 @@ def main(args):
             # name="Rockwell",
             # name="Copperplate",  # no, too much
             # name="Phosphate",
-            zorder=20,
+            zorder=zs["text"],
         )
 
     fig.savefig(f"{placename}.pdf", dpi=300, pad_inches=0.0)
@@ -295,6 +303,7 @@ def main(args):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument("--data-file", type=str, default="visit.yaml",)
     args = parser.parse_args()
 
     main(args)

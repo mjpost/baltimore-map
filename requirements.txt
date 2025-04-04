@@ -1,3 +1,4 @@
 osmnx
 geopandas==0.14.0
 matplotlib==3.10.1
+pyyaml
