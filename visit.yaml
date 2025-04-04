@@ -9,7 +9,8 @@ colors:
     bike_lane: "#ff9300"
     ghost_bike: "#ff9300"
     water: "#5891ac"  # love this blue
-    park: "#7d9f7d"  # decent green
+    # park: "#7d9f7d"  # decent green
+    park: "#57AA9B" 
     text: "#222222"
     neighborhood:
         # https://x.com/mjpost/status/1731471267373658184/photo/1
