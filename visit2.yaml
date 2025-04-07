@@ -9,25 +9,22 @@ colors:
     grid: "#cccccc"
     bike_lane: "#ff9300"
     ghost_bike: "#ff9300"
-    water: "#5891ac"  # love this blue
-    # park: "#7d9f7d"  # decent green
-    park: "#57AA9B" 
+    water: "#1a3783"
+    park: "#006d74"
     text: "#222222"
     neighborhood:
         # https://x.com/mjpost/status/1731471267373658184/photo/1
-        green: "#006d74"
         teal: "#00c3e4"
-        blue: "#1a3783"
         orange: "#fe3500"
         white: "#d7d3eb"
         gray: "#d8d1cb"
 zorders:
-  neighborhoods: 2
+  neighborhoods: 0
   streets: 1
   text: 20
 alphas:
-    neighborhood: 0.3
-    street: 0.5
+    neighborhood: 1
+    street: 0.4
     hood: 0.5
     hood_line: 0.5
     cemetery: 0.3
