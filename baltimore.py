@@ -265,7 +265,7 @@ def main(args):
     gdf_water.plot(ax=ax, facecolor=colors["water"], alpha=alphas["water"], zorder=zs["water"])
 
     gdf_park.plot(ax=ax, facecolor=colors["park"], alpha=alphas["park"], zorder=zs["park"])
-    gdf_cemetery.plot(ax=ax, facecolor=colors["cemetery"], ec="#444444", linewidth=1, alpha=alphas["cemetery"])
+    gdf_cemetery.plot(ax=ax, facecolor=colors["cemetery"], ec="#444444", linewidth=1, alpha=alphas["cemetery"], zorder=zs["cemetery"])
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=colors["ghost_bike"], alpha=alphas["ghost_bike"])
 
     # gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)

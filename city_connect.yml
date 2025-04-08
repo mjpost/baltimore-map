@@ -8,7 +8,7 @@ colors:
     grid: "#cccccc"
     bike_lane: "#ff9300"
     ghost_bike: "#ff9300"
-    water: "#7aa0c0"  # love this blue
+    water: "#6e91b6"  # love this blue
     park: "#9fb88d"  # decent green
     text: "#222222"
     neighborhood:
@@ -21,11 +21,12 @@ colors:
 zorders:
   streets: 1
   neighborhoods: 11
-  park: 12
-  water: 13
+  cemetery: 12
+  park: 13
+  water: 14
   text: 20
 alphas:
-    neighborhood: 0.2
+    neighborhood: 0.35
     street: 0.5
     hood: 0.5
     hood_line: 0.5
