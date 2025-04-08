@@ -261,10 +261,10 @@ def main(args):
     gdf_cycleways.plot(ax=ax, ec=colors["bike_lane"], linewidth=sizes["cycleway_line_width"], alpha=alphas["cycleway"])
     gdf_bikeable.plot(ax=ax, ec=colors["bike_lane"], linewidth=sizes["bike_lane_line_width"], alpha=alphas["bike_lane"], linestyle="--")
 
-    gdf_water.plot(ax=ax, facecolor=colors["water"], alpha=alphas["water"])
     # draw_nautical_lines(ax, ax.get_xlim() + ax.get_ylim(), spacing=0.01, angle=45)
+    gdf_water.plot(ax=ax, facecolor=colors["water"], alpha=alphas["water"], zorder=zs["water"])
 
-    gdf_park.plot(ax=ax, facecolor=colors["park"], alpha=alphas["park"])
+    gdf_park.plot(ax=ax, facecolor=colors["park"], alpha=alphas["park"], zorder=zs["park"])
     gdf_cemetery.plot(ax=ax, facecolor=colors["cemetery"], ec="#444444", linewidth=1, alpha=alphas["cemetery"])
     gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=colors["ghost_bike"], alpha=alphas["ghost_bike"])
 
