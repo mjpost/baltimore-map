@@ -73,6 +73,11 @@ def init_baltimore(tight=False, color_list=["gray"], color_method="random"):
         # Step 3: Assign to GeoDataFrame
         gdf_neighborhoods['color'] = gdf_neighborhoods.index.map(lambda idx: color_list[color_map[idx] % len(color_list)])
 
+    else:
+        # just assign white to all neighborhoods
+        logger.info("Using default color for neighborhoods")
+        gdf_neighborhoods["color"] = "white"
+
     # adjust the lat/long boundaries to get to a 1.5 height:width ratio
     west, south, east, north = gdf_neighborhoods.total_bounds
     # print the number of rows in gdf_neighborhoods

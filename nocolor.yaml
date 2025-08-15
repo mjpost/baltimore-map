@@ -1,0 +1,50 @@
+color_method: none
+colors:
+    # bg: "#eef0ed"
+    bg: "#d5d5d5"
+    street: "white"
+    hood: "white"
+    hood_line: "#444444"
+    cemetery: "#666666"
+    grid: "#cccccc"
+    bike_lane: "#ff9300"
+    ghost_bike: "#ff9300"
+    water: "#5891ac"  # love this blue
+    park: "#7d9f7d"  # decent green
+    # park: "#57AA9B" 
+    text: "#222222"
+    neighborhood:
+        # https://x.com/mjpost/status/1731471267373658184/photo/1
+        green: "#006d74"
+        teal: "#00c3e4"
+        blue: "#1a3783"
+        orange: "#fe3500"
+        white: "#d7d3eb"
+        gray: "#d8d1cb"
+zorders:
+  streets: 1
+  neighborhoods: 2
+  water: 10
+  park: 11
+  cemetery: 12
+  text: 20
+alphas:
+    neighborhood: 0.3
+    street: 0.5
+    hood: 0.5
+    hood_line: 0.5
+    cemetery: 0.3
+    grid: 0.5
+    cycleway: 0.3
+    bike_lane: 1
+    ghost_bike: 1
+    water: 1
+    park: 1
+sizes:
+    street_line_width: 1.2
+    hood_line_width: 2.5
+    cemetery_line_width: 0.5
+    grid_line_width: 0.5
+    bike_lane_line_width: 1
+    cycleway_line_width: 5
+    ghost_bike_line_width: 1
