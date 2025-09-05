@@ -164,13 +164,22 @@ def main(args):
     with open(args.data_file, "r") as f:
         data = yaml.safe_load(f)
 
-    colors = data["colors"]
-    alphas = data["alphas"]
-    zs = data["zorders"]
-    sizes = data["sizes"]
+    # Adapt to new object-based configuration schema
     color_method = data.get("color_method", "random")
 
-    color_list = list(colors["neighborhood"].values())
+    # Neighborhood palette
+    color_list = list(data.get("neighborhoods", {}).get("palette", {}).values())
+
+    # Helper accessors to keep changes localized
+    streets_cfg = data.get("streets", {})
+    neighborhoods_cfg = data.get("neighborhoods", {})
+    background_cfg = data.get("background", {})
+    water_cfg = data.get("water", {})
+    park_cfg = data.get("park", {})
+    cemetery_cfg = data.get("cemetery", {})
+    bike_cfg = data.get("bike", {})
+    ghost_cfg = data.get("ghost_bike", {})
+    text_cfg = data.get("text", {})
 
     gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_list=color_list, color_method=color_method)
 
@@ -233,14 +242,15 @@ def main(args):
 
     # Setup the figure and plot
     fig, ax = plt.subplots(figsize=(24, 36), dpi=300)
-    ax.set_facecolor(colors["bg"])
+    ax.set_facecolor(background_cfg.get("color", "white"))
     fig.tight_layout(pad=0)
 
     ax.set_xlim(west, east)
     ax.set_ylim(south, north)
 
     # print the x and y axis as a faint grid
-    ax.grid(color=colors["grid"], linestyle="--", linewidth=0.5)
+    grid_cfg = background_cfg.get("grid", {})
+    ax.grid(color=grid_cfg.get("color", "#cccccc"), linestyle=grid_cfg.get("linestyle", "--"), linewidth=grid_cfg.get("line_width", 0.5), alpha=grid_cfg.get("alpha", 0.5))
 
     # turn off axis labels
     ax.set_xticklabels([])
@@ -260,22 +270,70 @@ def main(args):
         spine.set_visible(False)
 
     # plot the streets, neighborhoods, water, parks, and cemeteries
-    gdf_streets.plot(ax=ax, ec=colors["street"], linewidth=sizes["street_line_width"], alpha=alphas["street"], zorder=zs["streets"])
+    gdf_streets.plot(
+        ax=ax,
+        ec=streets_cfg.get("color", "#ffffff"),
+        linewidth=streets_cfg.get("line_width", 1.0),
+        alpha=streets_cfg.get("alpha", 0.5),
+        zorder=streets_cfg.get("zorder", 1),
+    )
 
     # cycleways get plotted quite thick and blurry, with the darker lane on top of them
-    gdf_cycleways.plot(ax=ax, ec=colors["bike_lane"], linewidth=sizes["cycleway_line_width"], alpha=alphas["cycleway"])
-    gdf_bikeable.plot(ax=ax, ec=colors["bike_lane"], linewidth=sizes["bike_lane_line_width"], alpha=alphas["bike_lane"], linestyle="--")
+    gdf_cycleways.plot(
+        ax=ax,
+        ec=bike_cfg.get("lane_color", "#ff9300"),
+        linewidth=bike_cfg.get("cycleway_line_width", 5),
+        alpha=bike_cfg.get("cycleway_alpha", 0.3),
+    )
+    gdf_bikeable.plot(
+        ax=ax,
+        ec=bike_cfg.get("lane_color", "#ff9300"),
+        linewidth=bike_cfg.get("bike_lane_line_width", 1),
+        alpha=bike_cfg.get("bike_lane_alpha", 1),
+        linestyle="--",
+    )
 
     # draw_nautical_lines(ax, ax.get_xlim() + ax.get_ylim(), spacing=0.01, angle=45)
-    gdf_water.plot(ax=ax, facecolor=colors["water"], alpha=alphas["water"], zorder=zs["water"])
+    gdf_water.plot(
+        ax=ax,
+        facecolor=water_cfg.get("color", "#5891ac"),
+        alpha=water_cfg.get("alpha", 1),
+        zorder=water_cfg.get("zorder", 10),
+    )
+    if park_cfg:
+        gdf_park.plot(
+            ax=ax,
+            facecolor=park_cfg.get("color", "#7d9f7d"),
+            alpha=park_cfg.get("alpha", 1),
+            zorder=park_cfg.get("zorder", 11),
+        )
 
-    gdf_park.plot(ax=ax, facecolor=colors["park"], alpha=alphas["park"], zorder=zs["park"])
-    gdf_cemetery.plot(ax=ax, facecolor=colors["cemetery"], ec="#444444", linewidth=1, alpha=alphas["cemetery"], zorder=zs["cemetery"])
-    gdf_ghost.plot(ax=ax, marker="X", markersize=50, color=colors["ghost_bike"], alpha=alphas["ghost_bike"])
+    gdf_cemetery.plot(
+        ax=ax,
+        facecolor=cemetery_cfg.get("color", "#666666"),
+        ec="#444444",
+        linewidth=cemetery_cfg.get("line_width", 0.5),
+        alpha=cemetery_cfg.get("alpha", 0.3),
+        zorder=cemetery_cfg.get("zorder", 12),
+    )
+    gdf_ghost.plot(
+        ax=ax,
+        marker="X",
+        markersize=ghost_cfg.get("marker_size", 50),
+        color=ghost_cfg.get("color", "#ff9300"),
+        alpha=ghost_cfg.get("alpha", 1),
+    )
 
     # gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
 
-    gdf_neighborhoods.plot(ax=ax, facecolor=gdf_neighborhoods["color"], ec=colors["hood_line"], linewidth=sizes["hood_line_width"], alpha=alphas["neighborhood"], zorder=zs["neighborhoods"])
+    gdf_neighborhoods.plot(
+        ax=ax,
+        facecolor=gdf_neighborhoods["color"],
+        ec=neighborhoods_cfg.get("boundary_color", "#fe3500"),
+        linewidth=neighborhoods_cfg.get("boundary_line_width", 7.5),
+        alpha=neighborhoods_cfg.get("alpha", 0.3),
+        zorder=neighborhoods_cfg.get("zorder", 2),
+    )
 
     # Plot just the city boundary
     # city = ox.geocode_to_gdf("Baltimore, MD")
@@ -295,7 +353,7 @@ def main(args):
             horizontalalignment="center",
             verticalalignment="center",
             fontsize=6,
-            color=colors["text"],
+            color=text_cfg.get("color", "#222222"),
             # color="#dddddd",
             weight=800,
             # name="Georgia",
@@ -303,7 +361,7 @@ def main(args):
             # name="Rockwell",
             # name="Copperplate",  # no, too much
             # name="Phosphate",
-            zorder=zs["text"],
+            zorder=text_cfg.get("zorder", 20),
         )
 
     pdf_file = f"{placename}-{args.data_file.replace('.yaml', '')}.pdf"

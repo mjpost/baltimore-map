@@ -1,50 +1,62 @@
 color_method: none
-colors:
-    # bg: "#eef0ed"
-    bg: "#d5d5d5"
-    street: "white"
-    hood: "white"
-    hood_line: "#fe3500"
-    cemetery: "#666666"
-    grid: "#cccccc"
-    bike_lane: "#ff9300"
-    ghost_bike: "#ff9300"
-    water: "#5891ac"  # love this blue
-    park: "#7d9f7d"  # decent green
-    # park: "#57AA9B" 
-    text: "#222222"
-    neighborhood:
-        # https://x.com/mjpost/status/1731471267373658184/photo/1
+
+# Object-oriented configuration: each top-level key represents a map layer or visual element
+# with its styling attributes grouped together.
+
+background:
+    color: "#d5d5d5"
+    grid:
+        color: "#cccccc"
+        line_width: 0.5
+        alpha: 0.5
+        linestyle: "--"
+streets:
+    color: "white"            # formerly colors.street
+    line_width: 1.2            # formerly sizes.street_line_width
+    alpha: 0.5                 # formerly alphas.street
+    zorder: 1                  # formerly zorders.streets
+
+neighborhoods:
+    boundary_color: "#fe3500" # formerly colors.hood_line
+    boundary_line_width: 7.5   # formerly sizes.hood_line_width
+    alpha: 0.3                 # formerly alphas.neighborhood
+    zorder: 2                  # formerly zorders.neighborhoods
+    palette:                   # formerly colors.neighborhood
         green: "#006d74"
         teal: "#00c3e4"
         blue: "#1a3783"
         orange: "#fe3500"
         white: "#d7d3eb"
         gray: "#d8d1cb"
-zorders:
-  streets: 1
-  neighborhoods: 2
-  water: 10
-  park: 11
-  cemetery: 12
-  text: 20
-alphas:
-    neighborhood: 0.3
-    street: 0.5
-    hood: 0.5
-    hood_line: 0.5
-    cemetery: 0.3
-    grid: 0.5
-    cycleway: 0.3
-    bike_lane: 1
-    ghost_bike: 1
-    water: 1
-    park: 1
-sizes:
-    street_line_width: 1.2
-    hood_line_width: 7.5
-    cemetery_line_width: 0.5
-    grid_line_width: 0.5
-    bike_lane_line_width: 1
-    cycleway_line_width: 5
-    ghost_bike_line_width: 1
+
+water:
+    color: "#5891ac"
+    alpha: 1
+    zorder: 10                 # formerly zorders.water
+
+# park:
+#     color: "#7d9f7d"
+#     alpha: 1
+#     zorder: 11
+
+cemetery:
+    color: "#666666"
+    alpha: 0.3                 # formerly alphas.cemetery
+    line_width: 0.5            # formerly sizes.cemetery_line_width (used for edge if desired)
+    zorder: 12                 # formerly zorders.cemetery
+
+bike:
+    lane_color: "#ff9300"         # formerly colors.bike_lane / ghost_bike shared color
+    cycleway_line_width: 5         # formerly sizes.cycleway_line_width
+    cycleway_alpha: 0.3            # formerly alphas.cycleway
+    bike_lane_line_width: 1        # formerly sizes.bike_lane_line_width
+    bike_lane_alpha: 1             # formerly alphas.bike_lane
+
+ghost_bike:
+    color: "#ff9300"
+    alpha: 1
+    marker_size: 50
+
+text:
+    color: "#222222"          # formerly colors.text
+    zorder: 20                 # formerly zorders.text
