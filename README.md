@@ -4,7 +4,10 @@ This repository will generate a high-quality PDF map of Baltimore's neighborhood
 It also includes parks, water features, and ghost bikes.
 The underlying representation is properly vector-based, as opposed to tile-based, so it should be easy to adapt this to any size you like.
 
-![Baltimore map snippet](baltimore-snippet.jpg)
+![Baltimore map snippet](snippets/header-1.jpg)
+![Baltimore map snippet](snippets/baltimore-snippet.jpg)
+![Baltimore map snippet](snippets/header-3.jpg)
+![Baltimore map snippet](snippets/header-4.jpg)
 
 There are hundreds of other features you could include when pulling data from Open Street Map.
 Consider taking a look!
