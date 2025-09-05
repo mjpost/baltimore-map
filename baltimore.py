@@ -306,7 +306,9 @@ def main(args):
             zorder=zs["text"],
         )
 
-    fig.savefig(f"{placename}.pdf", dpi=300, pad_inches=0.0)
+    pdf_file = f"{placename}-{args.data_file.replace('.yaml', '')}.pdf"
+    print(f"Saving figure to {pdf_file}")
+    fig.savefig(pdf_file, dpi=300, pad_inches=0.0)
 
 
 if __name__ == "__main__":
