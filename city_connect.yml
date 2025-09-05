@@ -1,6 +1,6 @@
 color_method: constrained
 colors:
-    bg: "#eef0ed"
+    bg: "#d5d5d5"
     street: "white"
     hood: "white"
     hood_line: "#444444"
@@ -20,7 +20,7 @@ colors:
       blue: "#a0cce8"
 zorders:
   streets: 1
-  neighborhoods: 11
+  neighborhoods: 2
   cemetery: 12
   park: 13
   water: 14

@@ -22,8 +22,11 @@ colors:
         white: "#d7d3eb"
         gray: "#d8d1cb"
 zorders:
-  neighborhoods: 2
   streets: 1
+  neighborhoods: 2
+  water: 10
+  park: 11
+  cemetery: 12
   text: 20
 alphas:
     neighborhood: 0.3

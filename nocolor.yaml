@@ -4,7 +4,7 @@ colors:
     bg: "#d5d5d5"
     street: "white"
     hood: "white"
-    hood_line: "#444444"
+    hood_line: "#444444"#4619
     cemetery: "#666666"
     grid: "#cccccc"
     bike_lane: "#ff9300"
