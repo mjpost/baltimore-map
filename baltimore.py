@@ -6,7 +6,7 @@ streets and neighborhoods.
 It was used as the base of my Baltimore City Neighborhoods poster, which
 I manually post-edited with a title, legend, and other information.
 
-© 2023 Matt Post
+© 2023–2025 Matt Post
 """
 
 import random
@@ -24,14 +24,14 @@ from matplotlib.collections import LineCollection
 from common import *
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
+logger = logging.getLogger("baltimore-map")
 logger.setLevel(logging.INFO)
 
 # Turn on the local cache and console logging
 ox.settings.log_console = False
 ox.settings.use_cache = True
 
-def init_baltimore(tight=False, color_list=["gray"], color_method="random", cfg={}):
+def init_baltimore(color_list=["gray"], color_method="random", cfg={}):
     # The neighborhoods data can be retrieved from Open Street Map.
     # However, for Baltimore at least, this data is incomplete. Instead, we
     # load the data from a geojson file provided by the City of Baltimore.
@@ -81,50 +81,45 @@ def init_baltimore(tight=False, color_list=["gray"], color_method="random", cfg=
 
     else:
         # just assign white to all neighborhoods
-        logger.info("Using default color for neighborhoods")
+        logger.info("Using default coloring for neighborhoods")
         gdf_neighborhoods["color"] = cfg["neighborhoods"].get("bgcolor", "white")
 
     # adjust the lat/long boundaries to get to a 1.5 height:width ratio
     west, south, east, north = gdf_neighborhoods.total_bounds
     # print the number of rows in gdf_neighborhoods
-    print(f"Number of neighborhoods: {len(gdf_neighborhoods)}")
-    print("City boundaries:", gdf_neighborhoods.total_bounds)
+    logger.info(f"Number of neighborhoods: {len(gdf_neighborhoods)}")
+    logger.info(f"City boundaries: {gdf_neighborhoods.total_bounds}")
 
     one_mile = lat_lon_dist(one_mile_lat, one_mile_lon(abs(north - south) / 2))
 
-    if not tight:
-        west -= one_mile.x * cfg["margin"].get("west", 0)
-        east += one_mile.x * cfg["margin"].get("east", 0)
+    west -= one_mile.x * cfg["general"]["margin"].get("west", 0)
+    east += one_mile.x * cfg["general"]["margin"].get("east", 0)
 
-        # scale() distributes the compensation evenly. For Baltimore, we want more on the bottom.
-        # west, south, east, north = scale(west, south, east, north, target_ratio=1.5)
+    # scale() distributes the compensation evenly. For Baltimore, we want more on the bottom.
+    # west, south, east, north = scale(west, south, east, north, target_ratio=1.5)
 
-        # The print ratio is 1.5, so we need to make sure to select the right amount of vertical content. This requires finding the longitude distance at Baltimore's latitude.
-        required_height = 1.5 * lon_distance(west, east, (north + south) / 2)
-        current_height = north - south
-        extra_height = required_height - current_height
+    # The print ratio is 1.5, so we need to make sure to select the right amount of vertical content. This requires finding the longitude distance at Baltimore's latitude.
+    required_height = 1.5 * lon_distance(west, east, (north + south) / 2)
+    current_height = north - south
+    extra_height = required_height - current_height
 
-        # north += one_mile.y * 1.5
-        # south -= extra_height - one_mile.y * 1.5
+    # Keep a bit more space at the bottom, an aesthetic choice
+    pct_north = cfg["general"]["margin"].get("north", 0.3)
+    north += extra_height * pct_north
+    south -= extra_height * (1 - pct_north)
 
-        # Keep a bit more space at the bottom, an aesthetic choice
-        north += extra_height * 0.3
-        south -= extra_height * 0.7
-
-        print("Adjusted boundaries:", *map(lambda x: f"{x:.5f}", [west, south, east, north]))
+    logger.info(f"Adjusted boundaries: {[west, south, east, north]}")
 
     # Using a network type of "all_private" will get all the alleys etc
     # It also makes the boundaries with water a lot fuzzier since they
     # are overlaid.
     # network_type=drive is more limited
-    G = ox.graph_from_bbox((west, south, east, north), network_type=cfg["general"].get("network", "drive"), retain_all=True)
+    G = ox.graph_from_bbox(bbox=(west, south, east, north), network_type=cfg["general"].get("network", "drive"), retain_all=True)
 
     # Convert to a GeoDataFrame and project to a common CRS
-    if cfg["streets"]
-        gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
-        gdf_streets = gdf_streets.to_crs(common_crs)
-    else:
-        gdf_streets = None
+    # TODO: Is it possible to collapse these into a single layer?
+    gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
+    gdf_streets = gdf_streets.to_crs(common_crs)
 
     return gdf_neighborhoods, gdf_streets, west, south, east, north
 
@@ -194,62 +189,15 @@ def main(args):
 
     gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_list=color_list, color_method=color_method, cfg=cfg)
 
-    # tags = {"highway": "cycleway", "route": "bicycle"}
-    tags = {
-        'highway': 'cycleway',
-        # "route": "bicycle",
-        # 'cycleway:right': True,
-        # 'cycleway:left': True,
-        # 'cycleway:both': True,
-        # 'bicycle': ['yes', 'designated']
-        'bicycle': 'designated',
-    }
-    # tags = {"network": "lcn", "route": "bicycle"}
-    gdf_cycleways = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
-    # remove points
-    gdf_cycleways = gdf_cycleways[gdf_cycleways.geometry.type.isin(['LineString', 'MultiLineString'])]
-    gdf_cycleways.crs = common_crs
-
-    tags = {
-        'highway': 'cycleway',
-        "route": "bicycle",
-        'cycleway:right': True,
-        'cycleway:left': True,
-        'cycleway:both': True,
-        'bicycle': ['designated'],  # used to have 'yes' here too, but that's too much
-    }
-    gdf_bikeable = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
-    # remove points
-    gdf_bikeable = gdf_bikeable[gdf_bikeable.geometry.type.isin(['LineString', 'MultiLineString'])]
-    gdf_bikeable.crs = common_crs    
-
-    # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
-    tags = {"natural": "water"}
-    gdf_water = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
-    gdf_water.crs = common_crs
-    # Remove all points from the water data
-    gdf_water = gdf_water[gdf_water.geometry.type.isin(['Polygon', 'MultiPolygon'])]
-
     # cemeteries!
     tags = {"landuse": "cemetery"}
     gdf_cemetery = ox.features.features_from_place(place, tags=tags)
     gdf_cemetery.crs = common_crs
 
-    tags = {"leisure": ["park", "garden"]}
-    gdf_park = ox.features.features_from_place(place, tags=tags)
-    # remove all elements of type node
-    gdf_park = gdf_park[gdf_park["geometry"].apply(lambda x: x.geom_type != "Point")]
-    gdf_park.crs = common_crs
-
-    # Baltimore is also somewhat distinct in having good annotations for ghost bikes...
-    tags = {"memorial": "ghost_bike"}
-    gdf_ghost = ox.features_from_bbox(bbox=(west, south, east, north), tags=tags)
-    gdf_ghost.crs = common_crs
-
-    # ...and drinking fountains
-    tags = {"amenity": "drinking_water"}
-    gdf_drinking_fountains = ox.features.features_from_place(place, tags=tags)
-    gdf_drinking_fountains.crs = common_crs
+    # # ...and drinking fountains
+    # tags = {"amenity": "drinking_water"}
+    # gdf_drinking_fountains = ox.features.features_from_place(place, tags=tags)
+    # gdf_drinking_fountains.crs = common_crs
 
     # Setup the figure and plot
     fig, ax = plt.subplots(figsize=(24, 36), dpi=300)
@@ -287,40 +235,95 @@ def main(args):
 
     # plot the streets, neighborhoods, water, parks, and cemeteries
     # Clip streets to the combined neighborhoods geometry before plotting
-    if gdf_streets:
-        city_polygon = gdf_neighborhoods.union_all()
-        gdf_streets_clipped = gpd.clip(gdf_streets, city_polygon)
-        gdf_streets_clipped.plot(
-            ax=ax,
-            ec=cfg["streets"].get("color", "#ffffff"),
-            linewidth=cfg["streets"].get("line_width", 1.0),
-            alpha=cfg["streets"].get("alpha", 0.5),
-            zorder=cfg["streets"].get("zorder", 1),
-        )
+    city_polygon = gdf_neighborhoods.union_all()
+
+    if cfg["streets"]["clip"]:
+        gdf_streets = gpd.clip(gdf_streets, city_polygon)
+
+    gdf_streets.plot(
+        ax=ax,
+        ec=cfg["streets"].get("color", "#ffffff"),
+        linewidth=cfg["streets"].get("line_width", 1.0),
+        alpha=cfg["streets"].get("alpha", 0.5),
+        zorder=cfg["streets"].get("zorder", 1),
+    )
 
     # cycleways get plotted quite thick and blurry, with the darker lane on top of them
-    gdf_cycleways.plot(
-        ax=ax,
-        ec=cfg["bike"].get("lane_color", "#ff9300"),
-        linewidth=cfg["bike"].get("cycleway_line_width", 5),
-        alpha=cfg["bike"].get("cycleway_alpha", 0.3),
-    )
-    gdf_bikeable.plot(
-        ax=ax,
-        ec=cfg["bike"].get("lane_color", "#ff9300"),
-        linewidth=cfg["bike"].get("bike_lane_line_width", 1),
-        alpha=cfg["bike"].get("bike_lane_alpha", 1),
-        linestyle="--",
-    )
+    # tags = {"network": "lcn", "route": "bicycle"}
+    if cfg["bike"]:
+        # tags = {"highway": "cycleway", "route": "bicycle"}
+        tags = {
+            'highway': 'cycleway',
+            # "route": "bicycle",
+            # 'cycleway:right': True,
+            # 'cycleway:left': True,
+            # 'cycleway:both': True,
+            # 'bicycle': ['yes', 'designated']
+            'bicycle': 'designated',
+        }
+        gdf_cycleways = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
+        # remove points
+        gdf_cycleways = gdf_cycleways[gdf_cycleways.geometry.type.isin(['LineString', 'MultiLineString'])]
+        gdf_cycleways.crs = common_crs
+
+        tags = {
+            'highway': 'cycleway',
+            "route": "bicycle",
+            'cycleway:right': True,
+            'cycleway:left': True,
+            'cycleway:both': True,
+            'bicycle': ['designated'],  # used to have 'yes' here too, but that's too much
+        }
+        gdf_bikeable = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
+        # remove points
+        gdf_bikeable = gdf_bikeable[gdf_bikeable.geometry.type.isin(['LineString', 'MultiLineString'])]
+        gdf_bikeable.crs = common_crs    
+
+        if cfg["bike"]["clip"]:
+            gdf_cycleways = gpd.clip(gdf_cycleways, city_polygon)
+            gdf_bikeable = gpd.clip(gdf_bikeable, city_polygon)
+
+        gdf_cycleways.plot(
+            ax=ax,
+            ec=cfg["bike"].get("lane_color", "#ff9300"),
+            linewidth=cfg["bike"].get("cycleway_line_width", 5),
+            alpha=cfg["bike"].get("cycleway_alpha", 0.3),
+            zorder=cfg["streets"]["zorder"] - 1
+        )
+        gdf_bikeable.plot(
+            ax=ax,
+            ec=cfg["bike"].get("lane_color", "#ff9300"),
+            linewidth=cfg["bike"].get("bike_lane_line_width", 1),
+            alpha=cfg["bike"].get("bike_lane_alpha", 1),
+            linestyle="--",
+            zorder=cfg["streets"]["zorder"] + 1
+        )
 
     # draw_nautical_lines(ax, ax.get_xlim() + ax.get_ylim(), spacing=0.01, angle=45)
-    gdf_water.plot(
-        ax=ax,
-        facecolor=cfg["water"].get("color", "#5891ac"),
-        alpha=cfg["water"].get("alpha", 1),
-        zorder=cfg["water"].get("zorder", 10),
-    )
+    if cfg["water"]:
+        # TODO: get all water inside city boundaries, but just major waterways outside the city
+
+        # get all water, including lakes, rivers, and oceans, reservoirs, fountains, pools, and man-made lakes and ponds
+        tags = {"natural": "water"}
+        gdf_water = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
+        gdf_water.crs = common_crs
+        # Remove all points from the water data
+        gdf_water = gdf_water[gdf_water.geometry.type.isin(['Polygon', 'MultiPolygon'])]
+
+        gdf_water.plot(
+            ax=ax,
+            facecolor=cfg["water"].get("color", "#5891ac"),
+            alpha=cfg["water"].get("alpha", 1),
+            zorder=cfg["water"].get("zorder", 10),
+        )
+
     if cfg["park"]:
+        tags = {"leisure": ["park", "garden"]}
+        gdf_park = ox.features.features_from_place(place, tags=tags)
+        # remove all elements of type node
+        gdf_park = gdf_park[gdf_park["geometry"].apply(lambda x: x.geom_type != "Point")]
+        gdf_park.crs = common_crs
+
         gdf_park.plot(
             ax=ax,
             facecolor=cfg["park"].get("color", "#7d9f7d"),
@@ -337,6 +340,11 @@ def main(args):
             alpha=cfg["cemetery"].get("alpha", 0.3),
             zorder=cfg["cemetery"].get("zorder", 12),
         )
+
+    # Baltimore is also somewhat distinct in having good annotations for ghost bikes...
+    # tags = {"memorial": "ghost_bike"}
+    gdf_ghost = ox.features_from_bbox(bbox=(west, south, east, north), tags=tags)
+    gdf_ghost.crs = common_crs
     gdf_ghost.plot(
         ax=ax,
         marker="X",
@@ -377,34 +385,38 @@ def main(args):
     # Print the name of each neighborhood on the map.
     # These print at the center of the neighborhood polygon, which isn't always
     # correct. So we use a dictionary of offsets to shift them around a bit.
-    for _, row in gdf_neighborhoods.iterrows():
-        dx, dy = (0, 0)  # neighborhood_offsets.get(row["Name"], (0, 0))
-        centroid = row.geometry.centroid
-        x = centroid.x + dx
-        y = centroid.y + dy
+    text_display = cfg["text"].get("display", "none")
+    if text_display != "none":
+        for _, row in gdf_neighborhoods.iterrows():
+            dx, dy = (0, 0)  # neighborhood_offsets.get(row["Name"], (0, 0))
+            centroid = row.geometry.centroid
+            x = centroid.x + dx
+            y = centroid.y + dy
 
-        name = maybe_rename(row["Name"])
-        idx = ids[name]
+            name = maybe_rename(row["Name"])
+            idx = ids[name]
 
-        print(f"Neighborhood {idx}: {name}")
-        text_color = cfg["text"].get("color", row.get("color", "#222222"))
-        text_bg = cfg["text"].get("bgcolor", "white")
-        font_size = cfg["text"].get("size", 24)
+            print(f"Neighborhood {idx}: {name}")
+            text_color = cfg["text"].get("color", row.get("color", "#222222"))
+            text_bg = cfg["text"].get("bgcolor", "white")
+            font_size = cfg["text"].get("size", 24)
 
-        ax.annotate(
-            text=idx,
-            xy=(x, y),
-            ha="center",
-            va="center",
-            fontsize=font_size,
-            color=text_color,
-            weight=800,
-            name="Georgia",
-            zorder=cfg["text"].get("zorder", 20),
-            path_effects=[
-                pe.withStroke(linewidth=5, foreground=text_bg),
-            ],
-        )
+            text = name if text_display == "text" else idx
+
+            ax.annotate(
+                text=text,
+                xy=(x, y),
+                ha="center",
+                va="center",
+                fontsize=font_size,
+                color=text_color,
+                weight=800,
+                name="Georgia",
+                zorder=cfg["text"].get("zorder", 20),
+                path_effects=[
+                    pe.withStroke(linewidth=5, foreground=text_bg),
+                ],
+            )
 
     pdf_file = f"{placename}-{args.data_file.replace('.yaml', '')}.pdf"
     print(f"Saving figure to {pdf_file}")
