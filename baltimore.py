@@ -13,19 +13,25 @@ import random
 import osmnx as ox
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import networkx as nx
 import logging
+import yaml
+import numpy as np
+
+from matplotlib import patheffects as pe
+from matplotlib.collections import LineCollection
 
 from common import *
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Turn on the local cache and console logging
 ox.settings.log_console = False
 ox.settings.use_cache = True
 
-def init_baltimore(tight=False, color_list=["gray"], color_method="random"):
+def init_baltimore(tight=False, color_list=["gray"], color_method="random", cfg={}):
     # The neighborhoods data can be retrieved from Open Street Map.
     # However, for Baltimore at least, this data is incomplete. Instead, we
     # load the data from a geojson file provided by the City of Baltimore.
@@ -76,7 +82,7 @@ def init_baltimore(tight=False, color_list=["gray"], color_method="random"):
     else:
         # just assign white to all neighborhoods
         logger.info("Using default color for neighborhoods")
-        gdf_neighborhoods["color"] = "white"
+        gdf_neighborhoods["color"] = cfg["neighborhoods"].get("bgcolor", "white")
 
     # adjust the lat/long boundaries to get to a 1.5 height:width ratio
     west, south, east, north = gdf_neighborhoods.total_bounds
@@ -87,32 +93,41 @@ def init_baltimore(tight=False, color_list=["gray"], color_method="random"):
     one_mile = lat_lon_dist(one_mile_lat, one_mile_lon(abs(north - south) / 2))
 
     if not tight:
-        west -= one_mile.x
-        east += one_mile.x
+        west -= one_mile.x * cfg["margin"].get("west", 0)
+        east += one_mile.x * cfg["margin"].get("east", 0)
 
         # scale() distributes the compensation evenly. For Baltimore, we want more on the bottom.
         # west, south, east, north = scale(west, south, east, north, target_ratio=1.5)
 
-        compensation = 1.5 * lon_distance(west, east, (north + south) / 2) - (north - south)
+        # The print ratio is 1.5, so we need to make sure to select the right amount of vertical content. This requires finding the longitude distance at Baltimore's latitude.
+        required_height = 1.5 * lon_distance(west, east, (north + south) / 2)
+        current_height = north - south
+        extra_height = required_height - current_height
+
+        # north += one_mile.y * 1.5
+        # south -= extra_height - one_mile.y * 1.5
+
         # Keep a bit more space at the bottom, an aesthetic choice
-        north += one_mile.y * 1.5
-        south -= compensation - one_mile.y * 1.5
+        north += extra_height * 0.3
+        south -= extra_height * 0.7
 
         print("Adjusted boundaries:", *map(lambda x: f"{x:.5f}", [west, south, east, north]))
 
     # Using a network type of "all_private" will get all the alleys etc
     # It also makes the boundaries with water a lot fuzzier since they
     # are overlaid.
-    G = ox.graph_from_bbox((west, south, east, north), network_type="drive", retain_all=True)
+    # network_type=drive is more limited
+    G = ox.graph_from_bbox((west, south, east, north), network_type=cfg["general"].get("network", "drive"), retain_all=True)
 
     # Convert to a GeoDataFrame and project to a common CRS
-    gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
-    gdf_streets = gdf_streets.to_crs(common_crs)
+    if cfg["streets"]
+        gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
+        gdf_streets = gdf_streets.to_crs(common_crs)
+    else:
+        gdf_streets = None
 
     return gdf_neighborhoods, gdf_streets, west, south, east, north
 
-
-import networkx as nx
 
 # Step 1: Build adjacency graph
 def build_adjacency_graph(gdf):
@@ -128,9 +143,6 @@ def build_adjacency_graph(gdf):
                 G.add_edge(i, j)
     return G
 
-
-import numpy as np
-from matplotlib.collections import LineCollection
 
 def draw_nautical_lines(ax, bounds, spacing=0.01, angle=45, color='white', alpha=0.2, linewidth=0.5):
     """Draws diagonal lines at a given angle over specified bounds (xmin, ymin, xmax, ymax)."""
@@ -153,35 +165,34 @@ def draw_nautical_lines(ax, bounds, spacing=0.01, angle=45, color='white', alpha
     ax.add_collection(line_collection)
 
 
-import yaml
-
-
 def main(args):
     place = "Baltimore, MD"
     placename = "baltimore"
 
     # load colors from the yaml file
     with open(args.data_file, "r") as f:
-        data = yaml.safe_load(f)
+        cfg = yaml.safe_load(f)
 
     # Adapt to new object-based configuration schema
-    color_method = data.get("color_method", "random")
+    color_method = cfg.get("color_method", "random")
 
     # Neighborhood palette
-    color_list = list(data.get("neighborhoods", {}).get("palette", {}).values())
+    color_list = list(cfg.get("neighborhoods", {}).get("palette", {}).values())
+    # Ensure required config sections exist
+    for section in [
+        "streets",
+        "grid",
+        "neighborhoods",
+        "water",
+        "park",
+        "cemetery",
+        "bike",
+        "ghost_bike",
+        "text",
+    ]:
+        cfg.setdefault(section, {})
 
-    # Helper accessors to keep changes localized
-    streets_cfg = data.get("streets", {})
-    neighborhoods_cfg = data.get("neighborhoods", {})
-    background_cfg = data.get("background", {})
-    water_cfg = data.get("water", {})
-    park_cfg = data.get("park", {})
-    cemetery_cfg = data.get("cemetery", {})
-    bike_cfg = data.get("bike", {})
-    ghost_cfg = data.get("ghost_bike", {})
-    text_cfg = data.get("text", {})
-
-    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_list=color_list, color_method=color_method)
+    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_list=color_list, color_method=color_method, cfg=cfg)
 
     # tags = {"highway": "cycleway", "route": "bicycle"}
     tags = {
@@ -205,7 +216,7 @@ def main(args):
         'cycleway:right': True,
         'cycleway:left': True,
         'cycleway:both': True,
-        'bicycle': ['yes', 'designated'],
+        'bicycle': ['designated'],  # used to have 'yes' here too, but that's too much
     }
     gdf_bikeable = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
     # remove points
@@ -242,15 +253,20 @@ def main(args):
 
     # Setup the figure and plot
     fig, ax = plt.subplots(figsize=(24, 36), dpi=300)
-    ax.set_facecolor(background_cfg.get("color", "white"))
+    ax.set_facecolor(cfg["general"].get("bgcolor", "white"))
     fig.tight_layout(pad=0)
 
     ax.set_xlim(west, east)
     ax.set_ylim(south, north)
 
     # print the x and y axis as a faint grid
-    grid_cfg = background_cfg.get("grid", {})
-    ax.grid(color=grid_cfg.get("color", "#cccccc"), linestyle=grid_cfg.get("linestyle", "--"), linewidth=grid_cfg.get("line_width", 0.5), alpha=grid_cfg.get("alpha", 0.5))
+    if cfg["grid"]:
+        ax.grid(
+            color=cfg["grid"].get("color", "#cccccc"),
+            linestyle=cfg["grid"].get("linestyle", "--"),
+            linewidth=cfg["grid"].get("line_width", 0.5),
+            alpha=cfg["grid"].get("alpha", 0.5)
+        )
 
     # turn off axis labels
     ax.set_xticklabels([])
@@ -270,58 +286,63 @@ def main(args):
         spine.set_visible(False)
 
     # plot the streets, neighborhoods, water, parks, and cemeteries
-    gdf_streets.plot(
-        ax=ax,
-        ec=streets_cfg.get("color", "#ffffff"),
-        linewidth=streets_cfg.get("line_width", 1.0),
-        alpha=streets_cfg.get("alpha", 0.5),
-        zorder=streets_cfg.get("zorder", 1),
-    )
+    # Clip streets to the combined neighborhoods geometry before plotting
+    if gdf_streets:
+        city_polygon = gdf_neighborhoods.union_all()
+        gdf_streets_clipped = gpd.clip(gdf_streets, city_polygon)
+        gdf_streets_clipped.plot(
+            ax=ax,
+            ec=cfg["streets"].get("color", "#ffffff"),
+            linewidth=cfg["streets"].get("line_width", 1.0),
+            alpha=cfg["streets"].get("alpha", 0.5),
+            zorder=cfg["streets"].get("zorder", 1),
+        )
 
     # cycleways get plotted quite thick and blurry, with the darker lane on top of them
     gdf_cycleways.plot(
         ax=ax,
-        ec=bike_cfg.get("lane_color", "#ff9300"),
-        linewidth=bike_cfg.get("cycleway_line_width", 5),
-        alpha=bike_cfg.get("cycleway_alpha", 0.3),
+        ec=cfg["bike"].get("lane_color", "#ff9300"),
+        linewidth=cfg["bike"].get("cycleway_line_width", 5),
+        alpha=cfg["bike"].get("cycleway_alpha", 0.3),
     )
     gdf_bikeable.plot(
         ax=ax,
-        ec=bike_cfg.get("lane_color", "#ff9300"),
-        linewidth=bike_cfg.get("bike_lane_line_width", 1),
-        alpha=bike_cfg.get("bike_lane_alpha", 1),
+        ec=cfg["bike"].get("lane_color", "#ff9300"),
+        linewidth=cfg["bike"].get("bike_lane_line_width", 1),
+        alpha=cfg["bike"].get("bike_lane_alpha", 1),
         linestyle="--",
     )
 
     # draw_nautical_lines(ax, ax.get_xlim() + ax.get_ylim(), spacing=0.01, angle=45)
     gdf_water.plot(
         ax=ax,
-        facecolor=water_cfg.get("color", "#5891ac"),
-        alpha=water_cfg.get("alpha", 1),
-        zorder=water_cfg.get("zorder", 10),
+        facecolor=cfg["water"].get("color", "#5891ac"),
+        alpha=cfg["water"].get("alpha", 1),
+        zorder=cfg["water"].get("zorder", 10),
     )
-    if park_cfg:
+    if cfg["park"]:
         gdf_park.plot(
             ax=ax,
-            facecolor=park_cfg.get("color", "#7d9f7d"),
-            alpha=park_cfg.get("alpha", 1),
-            zorder=park_cfg.get("zorder", 11),
+            facecolor=cfg["park"].get("color", "#7d9f7d"),
+            alpha=cfg["park"].get("alpha", 1),
+            zorder=cfg["park"].get("zorder", 11),
         )
 
-    gdf_cemetery.plot(
-        ax=ax,
-        facecolor=cemetery_cfg.get("color", "#666666"),
-        ec="#444444",
-        linewidth=cemetery_cfg.get("line_width", 0.5),
-        alpha=cemetery_cfg.get("alpha", 0.3),
-        zorder=cemetery_cfg.get("zorder", 12),
-    )
+    if cfg["cemetery"]:
+        gdf_cemetery.plot(
+            ax=ax,
+            facecolor=cfg["cemetery"].get("color", "#666666"),
+            ec="#444444",
+            linewidth=cfg["cemetery"].get("line_width", 0.5),
+            alpha=cfg["cemetery"].get("alpha", 0.3),
+            zorder=cfg["cemetery"].get("zorder", 12),
+        )
     gdf_ghost.plot(
         ax=ax,
         marker="X",
-        markersize=ghost_cfg.get("marker_size", 50),
-        color=ghost_cfg.get("color", "#ff9300"),
-        alpha=ghost_cfg.get("alpha", 1),
+        markersize=cfg["ghost_bike"].get("marker_size", 50),
+        color=cfg["ghost_bike"].get("color", "#ff9300"),
+        alpha=cfg["ghost_bike"].get("alpha", 1),
     )
 
     # gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
@@ -329,10 +350,10 @@ def main(args):
     gdf_neighborhoods.plot(
         ax=ax,
         facecolor=gdf_neighborhoods["color"],
-        ec=neighborhoods_cfg.get("boundary_color", "#fe3500"),
-        linewidth=neighborhoods_cfg.get("boundary_line_width", 7.5),
-        alpha=neighborhoods_cfg.get("alpha", 0.3),
-        zorder=neighborhoods_cfg.get("zorder", 2),
+        ec=cfg["neighborhoods"].get("boundary_color", "#fe3500"),
+        linewidth=cfg["neighborhoods"].get("boundary_line_width", 7.5),
+        alpha=cfg["neighborhoods"].get("alpha", 0.3),
+        zorder=cfg["neighborhoods"].get("zorder", 2),
     )
 
     # Plot just the city boundary
@@ -340,28 +361,49 @@ def main(args):
     # city_proj = ox.project_gdf(city, to_crs=common_crs)
     # city_proj.plot(ax=ax, facecolor="none", ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
 
+    # assign IDs to neighborhood names in alphabetical order
+    def maybe_rename(name):
+        rename_map = {
+            "Baltimore Peninsula": "Port Covington (Baltimore Peninsula)",
+            "Washington Village/Pigtown": "Pigtown (Washington Village)",
+            # https://www.reddit.com/r/baltimore/comments/1mnjd08/comment/n87fbwd/
+            "Charles North": "Station North (Charles North)",
+        }
+        return rename_map.get(name, name)
+
+    names = [maybe_rename(name) for name in gdf_neighborhoods["Name"]]
+    ids = { name: str(i) for i, name in enumerate(sorted(names), 1) }
+
     # Print the name of each neighborhood on the map.
     # These print at the center of the neighborhood polygon, which isn't always
     # correct. So we use a dictionary of offsets to shift them around a bit.
-    for idx, row in gdf_neighborhoods.iterrows():
-        x = row["geometry"].centroid.x + neighborhood_offsets.get(row["Name"], (0, 0))[0]
-        y = row["geometry"].centroid.y + neighborhood_offsets.get(row["Name"], (0, 0))[1]
+    for _, row in gdf_neighborhoods.iterrows():
+        dx, dy = (0, 0)  # neighborhood_offsets.get(row["Name"], (0, 0))
+        centroid = row.geometry.centroid
+        x = centroid.x + dx
+        y = centroid.y + dy
+
+        name = maybe_rename(row["Name"])
+        idx = ids[name]
+
+        print(f"Neighborhood {idx}: {name}")
+        text_color = cfg["text"].get("color", row.get("color", "#222222"))
+        text_bg = cfg["text"].get("bgcolor", "white")
+        font_size = cfg["text"].get("size", 24)
 
         ax.annotate(
-            text=munge(row["Name"]).upper(),
+            text=idx,
             xy=(x, y),
-            horizontalalignment="center",
-            verticalalignment="center",
-            fontsize=6,
-            color=text_cfg.get("color", "#222222"),
-            # color="#dddddd",
+            ha="center",
+            va="center",
+            fontsize=font_size,
+            color=text_color,
             weight=800,
-            # name="Georgia",
-            name="Avenir Next",
-            # name="Rockwell",
-            # name="Copperplate",  # no, too much
-            # name="Phosphate",
-            zorder=text_cfg.get("zorder", 20),
+            name="Georgia",
+            zorder=cfg["text"].get("zorder", 20),
+            path_effects=[
+                pe.withStroke(linewidth=5, foreground=text_bg),
+            ],
         )
 
     pdf_file = f"{placename}-{args.data_file.replace('.yaml', '')}.pdf"

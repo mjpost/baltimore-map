@@ -3,25 +3,39 @@ color_method: none
 # Object-oriented configuration: each top-level key represents a map layer or visual element
 # with its styling attributes grouped together.
 
-background:
-    color: "#d5d5d5"
-    grid:
-        color: "#cccccc"
-        line_width: 0.5
-        alpha: 0.5
-        linestyle: "--"
+colors:
+    baltimore_gold: "#c79102"  # baltimore yellow/gold
+
+# Add extra horizontal space. The extra vertical space is then
+# determined by the paper ratio (2:3).
+margin:
+    west: 3
+    east: 3
+
+general:
+    bgcolor: "white"
+    network: "drive"  # all, drive, walk, bike
+
+# grid:
+#     color: "#cccccc"
+#     line_width: 0.5
+#     alpha: 0.5
+#     linestyle: "-"
+
 streets:
-    color: "white"            # formerly colors.street
-    line_width: 1.2            # formerly sizes.street_line_width
-    alpha: 0.5                 # formerly alphas.street
-    zorder: 1                  # formerly zorders.streets
+    # color: "#d8d1cb"  # some kind of gray
+    color: "black"
+    line_width: 1
+    alpha: 0.5
+    zorder: 1
 
 neighborhoods:
-    boundary_color: "#fe3500" # formerly colors.hood_line
-    boundary_line_width: 7.5   # formerly sizes.hood_line_width
-    alpha: 0.3                 # formerly alphas.neighborhood
-    zorder: 2                  # formerly zorders.neighborhoods
-    palette:                   # formerly colors.neighborhood
+    boundary_color: "black"
+    bgcolor: "#ffffff"
+    boundary_line_width: 7.5
+    alpha: 0.3
+    zorder: 2
+    palette:
         green: "#006d74"
         teal: "#00c3e4"
         blue: "#1a3783"
@@ -32,7 +46,7 @@ neighborhoods:
 water:
     color: "#5891ac"
     alpha: 1
-    zorder: 10                 # formerly zorders.water
+    zorder: 10
 
 # park:
 #     color: "#7d9f7d"
@@ -41,16 +55,16 @@ water:
 
 cemetery:
     color: "#666666"
-    alpha: 0.3                 # formerly alphas.cemetery
-    line_width: 0.5            # formerly sizes.cemetery_line_width (used for edge if desired)
-    zorder: 12                 # formerly zorders.cemetery
+    alpha: 0.3
+    line_width: 0.5
+    zorder: 12
 
 bike:
-    lane_color: "#ff9300"         # formerly colors.bike_lane / ghost_bike shared color
-    cycleway_line_width: 5         # formerly sizes.cycleway_line_width
-    cycleway_alpha: 0.3            # formerly alphas.cycleway
-    bike_lane_line_width: 1        # formerly sizes.bike_lane_line_width
-    bike_lane_alpha: 1             # formerly alphas.bike_lane
+    lane_color: "#ff9300"
+    cycleway_line_width: 5
+    cycleway_alpha: 0.3
+    bike_lane_line_width: 2
+    bike_lane_alpha: 1
 
 ghost_bike:
     color: "#ff9300"
@@ -58,5 +72,7 @@ ghost_bike:
     marker_size: 50
 
 text:
-    color: "#222222"          # formerly colors.text
-    zorder: 20                 # formerly zorders.text
+    color: "#222222"
+    bgcolor: "white"
+    size: 20
+    zorder: 20
