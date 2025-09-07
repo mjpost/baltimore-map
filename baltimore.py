@@ -114,7 +114,7 @@ def init_baltimore(color_list=["gray"], color_method="random", cfg={}):
     # It also makes the boundaries with water a lot fuzzier since they
     # are overlaid.
     # network_type=drive is more limited
-    G = ox.graph_from_bbox(bbox=(west, south, east, north), network_type=cfg["general"].get("network", "drive"), retain_all=True)
+    G = cache_graph(west, south, east, north, cfg["general"].get("network", "drive"))
 
     # Convert to a GeoDataFrame and project to a common CRS
     # TODO: Is it possible to collapse these into a single layer?
@@ -123,6 +123,20 @@ def init_baltimore(color_list=["gray"], color_method="random", cfg={}):
 
     return gdf_neighborhoods, gdf_streets, west, south, east, north
 
+
+def cache_graph(west, south, east, north, network_type):
+    key = f"{west:.5f}_{south:.5f}_{east:.5f}_{north:.5f}_{network_type}"
+    h = hashlib.sha1(key.encode()).hexdigest()[:16]
+    cache_dir = Path("graph_cache")
+    cache_dir.mkdir(exist_ok=True)
+    path = cache_dir / f"graph_{h}.graphml"
+    if path.exists():
+        logger.info(f"Loading cached graph from {path}")
+        return ox.load_graphml(path)
+    logger.info(f"Generating new graph and saving to {path}")
+    G = ox.graph_from_bbox(bbox=(west, south, east, north), network_type=network_type, retain_all=True)
+    ox.save_graphml(G, path)
+    return G
 
 # Step 1: Build adjacency graph
 def build_adjacency_graph(gdf):
