@@ -24,11 +24,11 @@ general:
         north: 0.3
 
 zorders:
-    neighborhoods: 2
-    streets: 3
+    streets: 1
     water: 10
     park: 11
     cemetery: 12
+    neighborhoods: 13
     bike: 15
     text: 20
 
@@ -41,25 +41,26 @@ zorders:
 #     linestyle: "-"
 
 streets:
-    # color: "#d8d1cb"  # some kind of gray
-    color: *black
-    line_width: 0.5
-    alpha: 0.9
-    clip: true
+    # Streets are laid before neighborhoods, which use a 
+    # white background with an alpha. So use a dark color here.
+    color: "#cccccc"
+    line_width: 1.5
+    alpha: 1
+    clip_to_city: true
 
 bike:
     lane_color: *orange
     cycleway_line_width: 3
     cycleway_alpha: 1
     bike_lane_line_width: 1
-    bike_lane_alpha: 1
+    bike_lane_alpha: 0.5
     clip: true
 
 neighborhoods:
-    boundary_color: *black
+    boundary_color: "#444444"
     bgcolor: "#ffffff"
-    boundary_line_width: 4
-    alpha: 1
+    boundary_line_width: 3
+    alpha: 0.5
 
 water:
     color: *water
