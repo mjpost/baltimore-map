@@ -290,11 +290,10 @@ def main(args):
         # tags = {"highway": "cycleway", "route": "bicycle"}
         tags = {
             'highway': 'cycleway',
-            # "route": "bicycle",
+            "route": "bicycle",
             # 'cycleway:right': True,
             # 'cycleway:left': True,
             # 'cycleway:both': True,
-            # 'bicycle': ['yes', 'designated']
             'bicycle': 'designated',
         }
         gdf_cycleways = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
