@@ -321,18 +321,18 @@ def main(args):
 
         gdf_cycleways.plot(
             ax=ax,
-            ec=cfg["bike"].get("lane_color", "#ff9300"),
-            linewidth=cfg["bike"].get("cycleway_line_width", 5),
-            alpha=cfg["bike"].get("cycleway_alpha", 0.3),
-            zorder=cfg["zorders"].get("streets", 1) - 1
+            ec=cfg["bike"]["lane_color"],
+            linewidth=cfg["bike"]["cycleway_line_width"],
+            alpha=cfg["bike"]["cycleway_alpha"],
+            zorder=cfg["zorders"]["bike"]
         )
         gdf_bikeable.plot(
             ax=ax,
-            ec=cfg["bike"].get("lane_color", "#ff9300"),
-            linewidth=cfg["bike"].get("bike_lane_line_width", 1),
-            alpha=cfg["bike"].get("bike_lane_alpha", 1),
+            ec=cfg["bike"]["lane_color"],
+            linewidth=cfg["bike"]["bike_lane_line_width"],
+            alpha=cfg["bike"]["bike_lane_alpha"],
             linestyle="--",
-            zorder=cfg["zorders"].get("streets", 1) + 1
+            zorder=cfg["zorders"]["bike"] + 1
         )
 
     # draw_nautical_lines(ax, ax.get_xlim() + ax.get_ylim(), spacing=0.01, angle=45)
@@ -392,12 +392,13 @@ def main(args):
 
     # gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
 
+    # Transparent (no fill) neighborhoods: only draw boundaries
     gdf_neighborhoods.plot(
         ax=ax,
-        facecolor=gdf_neighborhoods["color"],
+        facecolor="none",  # or facecolor="none"
         ec=cfg["neighborhoods"]["boundary_color"],
         linewidth=cfg["neighborhoods"]["boundary_line_width"],
-        alpha=cfg["neighborhoods"]["alpha"],
+        alpha=cfg["neighborhoods"]["alpha"],  # now applies to edges only
         zorder=cfg["zorders"]["neighborhoods"],
     )
 
