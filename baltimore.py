@@ -84,7 +84,7 @@ def init_baltimore(color_list=["gray"], color_method="random", cfg={}):
     else:
         # just assign white to all neighborhoods
         logger.info("Using default coloring for neighborhoods")
-        gdf_neighborhoods["color"] = cfg["neighborhoods"].get("bgcolor", "white")
+        gdf_neighborhoods["color"] = cfg["neighborhoods"]["bgcolor"]
 
     # adjust the lat/long boundaries to get to a 1.5 height:width ratio
     west, south, east, north = gdf_neighborhoods.total_bounds
@@ -121,7 +121,7 @@ def init_baltimore(color_list=["gray"], color_method="random", cfg={}):
         south,
         east,
         north,
-        cfg["general"].get("network", "drive"),
+        cfg["general"]["network"],
         retain_all=True,
     )
 
@@ -205,7 +205,7 @@ def main(args):
     cfg["zorders"] = zorders
 
     # Adapt to new object-based configuration schema
-    color_method = cfg.get("color_method", "random")
+    color_method = cfg.get("color_method", "none")
 
     # Neighborhood palette
     color_list = list(cfg.get("neighborhoods", {}).get("palette", {}).values())
@@ -246,10 +246,10 @@ def main(args):
     # print the x and y axis as a faint grid
     if cfg["grid"]:
         ax.grid(
-            color=cfg["grid"].get("color", "#cccccc"),
-            linestyle=cfg["grid"].get("linestyle", "--"),
-            linewidth=cfg["grid"].get("line_width", 0.5),
-            alpha=cfg["grid"].get("alpha", 0.5)
+            color=cfg["grid"]["color"],
+            linestyle=cfg["grid"]["linestyle"],
+            linewidth=cfg["grid"]["line_width"],
+            alpha=cfg["grid"]["alpha"]
         )
 
     # turn off axis labels
@@ -273,15 +273,15 @@ def main(args):
     # Clip streets to the combined neighborhoods geometry before plotting
     city_polygon = gdf_neighborhoods.union_all()
 
-    if cfg["streets"]["clip"]:
+    if cfg["streets"].get("clip_to_city", False):
         gdf_streets = gpd.clip(gdf_streets, city_polygon)
 
     gdf_streets.plot(
         ax=ax,
-        ec=cfg["streets"].get("color", "#ffffff"),
-        linewidth=cfg["streets"].get("line_width", 1.0),
-        alpha=cfg["streets"].get("alpha", 0.5),
-        zorder=cfg["zorders"].get("streets", 1),
+        ec=cfg["streets"]["color"],
+        linewidth=cfg["streets"]["line_width"],
+        alpha=cfg["streets"]["alpha"],
+        zorder=cfg["zorders"]["streets"]
     )
 
     # cycleways get plotted quite thick and blurry, with the darker lane on top of them
@@ -362,42 +362,43 @@ def main(args):
 
         gdf_park.plot(
             ax=ax,
-            facecolor=cfg["park"].get("color", "#7d9f7d"),
-            alpha=cfg["park"].get("alpha", 1),
-            zorder=cfg["zorders"].get("park", 11),
+            facecolor=cfg["park"]["color"],
+            alpha=cfg["park"]["alpha"],
+            zorder=cfg["zorders"]["park"],
         )
 
     if cfg["cemetery"]:
         gdf_cemetery.plot(
             ax=ax,
-            facecolor=cfg["cemetery"].get("color", "#666666"),
+            facecolor=cfg["cemetery"]["color"],
             ec="#444444",
-            linewidth=cfg["cemetery"].get("line_width", 0.5),
-            alpha=cfg["cemetery"].get("alpha", 0.3),
-            zorder=cfg["zorders"].get("cemetery", 12),
+            linewidth=cfg["cemetery"]["line_width"],
+            alpha=cfg["cemetery"]["alpha"],
+            zorder=cfg["zorders"]["cemetery"],
         )
 
     # Baltimore is also somewhat distinct in having good annotations for ghost bikes...
     # tags = {"memorial": "ghost_bike"}
-    gdf_ghost = ox.features_from_bbox(bbox=(west, south, east, north), tags=tags)
-    gdf_ghost.crs = common_crs
-    gdf_ghost.plot(
-        ax=ax,
-        marker="X",
-        markersize=cfg["ghost_bike"].get("marker_size", 50),
-        color=cfg["ghost_bike"].get("color", "#ff9300"),
-        alpha=cfg["ghost_bike"].get("alpha", 1),
-    )
+    if cfg["ghost_bike"]:
+        gdf_ghost = ox.features_from_bbox(bbox=(west, south, east, north), tags=tags)
+        gdf_ghost.crs = common_crs
+        gdf_ghost.plot(
+            ax=ax,
+            marker="X",
+            markersize=cfg["ghost_bike"]["marker_size"],
+            color=cfg["ghost_bike"]["color"],
+            alpha=cfg["ghost_bike"]["alpha"],
+        )
 
     # gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
 
     gdf_neighborhoods.plot(
         ax=ax,
         facecolor=gdf_neighborhoods["color"],
-        ec=cfg["neighborhoods"].get("boundary_color", "#fe3500"),
-        linewidth=cfg["neighborhoods"].get("boundary_line_width", 7.5),
-        alpha=cfg["neighborhoods"].get("alpha", 0.3),
-        zorder=cfg["zorders"].get("neighborhoods", 2),
+        ec=cfg["neighborhoods"]["boundary_color"],
+        linewidth=cfg["neighborhoods"]["boundary_line_width"],
+        alpha=cfg["neighborhoods"]["alpha"],
+        zorder=cfg["zorders"]["neighborhoods"],
     )
 
     # Plot just the city boundary
@@ -433,9 +434,9 @@ def main(args):
             idx = ids[name]
 
             print(f"Neighborhood {idx}: {name}")
-            text_color = cfg["text"].get("color", row.get("color", "#222222"))
-            text_bg = cfg["text"].get("bgcolor", "white")
-            font_size = cfg["text"].get("size", 24)
+            text_color = cfg["text"]["color"]
+            text_bg = cfg["text"]["bgcolor"]
+            font_size = cfg["text"]["size"]
 
             text = name if text_display == "text" else idx
 
@@ -448,7 +449,7 @@ def main(args):
                 color=text_color,
                 weight=800,
                 name="Georgia",
-                zorder=cfg["zorders"].get("text", 20),
+                zorder=cfg["zorders"]["text"],
                 path_effects=[
                     pe.withStroke(linewidth=5, foreground=text_bg),
                 ],
