@@ -9,6 +9,8 @@ I manually post-edited with a title, legend, and other information.
 © 2023–2025 Matt Post
 """
 
+import hashlib
+from pathlib import Path
 import random
 import osmnx as ox
 import geopandas as gpd
@@ -114,7 +116,14 @@ def init_baltimore(color_list=["gray"], color_method="random", cfg={}):
     # It also makes the boundaries with water a lot fuzzier since they
     # are overlaid.
     # network_type=drive is more limited
-    G = cache_graph(west, south, east, north, cfg["general"].get("network", "drive"))
+    G = cache_graph(
+        west,
+        south,
+        east,
+        north,
+        cfg["general"].get("network", "drive"),
+        retain_all=True,
+    )
 
     # Convert to a GeoDataFrame and project to a common CRS
     # TODO: Is it possible to collapse these into a single layer?
@@ -124,8 +133,8 @@ def init_baltimore(color_list=["gray"], color_method="random", cfg={}):
     return gdf_neighborhoods, gdf_streets, west, south, east, north
 
 
-def cache_graph(west, south, east, north, network_type):
-    key = f"{west:.5f}_{south:.5f}_{east:.5f}_{north:.5f}_{network_type}"
+def cache_graph(west, south, east, north, network_type, retain_all=True):
+    key = f"{west:.5f}_{south:.5f}_{east:.5f}_{north:.5f}_{network_type}_ra{int(retain_all)}"
     h = hashlib.sha1(key.encode()).hexdigest()[:16]
     cache_dir = Path("graph_cache")
     cache_dir.mkdir(exist_ok=True)
@@ -134,7 +143,7 @@ def cache_graph(west, south, east, north, network_type):
         logger.info(f"Loading cached graph from {path}")
         return ox.load_graphml(path)
     logger.info(f"Generating new graph and saving to {path}")
-    G = ox.graph_from_bbox(bbox=(west, south, east, north), network_type=network_type, retain_all=True)
+    G = ox.graph_from_bbox(bbox=(west, south, east, north), network_type=network_type, retain_all=retain_all)
     ox.save_graphml(G, path)
     return G
 
@@ -181,6 +190,19 @@ def main(args):
     # load colors from the yaml file
     with open(args.data_file, "r") as f:
         cfg = yaml.safe_load(f)
+
+    # Build z-order database. This can either be read from
+    # a top-level "zorders" section, or pulled from each section.
+    zorders = cfg.get("zorders", {})
+    # Now go through all the top-level sections, and grab
+    # a z-order if present
+    for section in cfg.keys():
+        if section == "zorders":
+            continue
+        if isinstance(cfg[section], dict) and (zorder := cfg[section].get("zorder")):
+            zorders[section] = zorder
+    # Now update the cfg sections with the zorders
+    cfg["zorders"] = zorders
 
     # Adapt to new object-based configuration schema
     color_method = cfg.get("color_method", "random")
@@ -259,7 +281,7 @@ def main(args):
         ec=cfg["streets"].get("color", "#ffffff"),
         linewidth=cfg["streets"].get("line_width", 1.0),
         alpha=cfg["streets"].get("alpha", 0.5),
-        zorder=cfg["streets"].get("zorder", 1),
+        zorder=cfg["zorders"].get("streets", 1),
     )
 
     # cycleways get plotted quite thick and blurry, with the darker lane on top of them
@@ -302,7 +324,7 @@ def main(args):
             ec=cfg["bike"].get("lane_color", "#ff9300"),
             linewidth=cfg["bike"].get("cycleway_line_width", 5),
             alpha=cfg["bike"].get("cycleway_alpha", 0.3),
-            zorder=cfg["streets"]["zorder"] - 1
+            zorder=cfg["zorders"].get("streets", 1) - 1
         )
         gdf_bikeable.plot(
             ax=ax,
@@ -310,7 +332,7 @@ def main(args):
             linewidth=cfg["bike"].get("bike_lane_line_width", 1),
             alpha=cfg["bike"].get("bike_lane_alpha", 1),
             linestyle="--",
-            zorder=cfg["streets"]["zorder"] + 1
+            zorder=cfg["zorders"].get("streets", 1) + 1
         )
 
     # draw_nautical_lines(ax, ax.get_xlim() + ax.get_ylim(), spacing=0.01, angle=45)
@@ -328,7 +350,7 @@ def main(args):
             ax=ax,
             facecolor=cfg["water"].get("color", "#5891ac"),
             alpha=cfg["water"].get("alpha", 1),
-            zorder=cfg["water"].get("zorder", 10),
+            zorder=cfg["zorders"].get("water", 10),
         )
 
     if cfg["park"]:
@@ -342,7 +364,7 @@ def main(args):
             ax=ax,
             facecolor=cfg["park"].get("color", "#7d9f7d"),
             alpha=cfg["park"].get("alpha", 1),
-            zorder=cfg["park"].get("zorder", 11),
+            zorder=cfg["zorders"].get("park", 11),
         )
 
     if cfg["cemetery"]:
@@ -352,7 +374,7 @@ def main(args):
             ec="#444444",
             linewidth=cfg["cemetery"].get("line_width", 0.5),
             alpha=cfg["cemetery"].get("alpha", 0.3),
-            zorder=cfg["cemetery"].get("zorder", 12),
+            zorder=cfg["zorders"].get("cemetery", 12),
         )
 
     # Baltimore is also somewhat distinct in having good annotations for ghost bikes...
@@ -375,7 +397,7 @@ def main(args):
         ec=cfg["neighborhoods"].get("boundary_color", "#fe3500"),
         linewidth=cfg["neighborhoods"].get("boundary_line_width", 7.5),
         alpha=cfg["neighborhoods"].get("alpha", 0.3),
-        zorder=cfg["neighborhoods"].get("zorder", 2),
+        zorder=cfg["zorders"].get("neighborhoods", 2),
     )
 
     # Plot just the city boundary
@@ -426,7 +448,7 @@ def main(args):
                 color=text_color,
                 weight=800,
                 name="Georgia",
-                zorder=cfg["text"].get("zorder", 20),
+                zorder=cfg["zorders"].get("text", 20),
                 path_effects=[
                     pe.withStroke(linewidth=5, foreground=text_bg),
                 ],
