@@ -1,0 +1,86 @@
+color_method: none
+
+# Object-oriented configuration: each top-level key represents a map layer or visual element
+# with its styling attributes grouped together.
+
+palette:
+    black: &black "#000000"
+    green: &green "#C2DD9A"
+    teal: "#00c3e4"
+    blue: &water "#B0CAE2"
+    orange: &orange "#FD992E"
+    white: "#d7d3eb"
+    gray: &cemetery "#D1D1D1"
+
+general:
+    bgcolor: white
+    network: "drive"  # all, all_public, drive, walk, bike
+    # Add extra horizontal space. The extra vertical space is then
+    # determined by the paper ratio (2:3).
+    margin:
+        west: 1.5
+        east: 1.5
+        # (decimal) percentage of extra vertical space to assign to the north
+        north: 0.3
+
+zorders:
+    neighborhoods: 2
+    streets: 3
+    water: 10
+    park: 11
+    cemetery: 12
+    bike: 15
+    text: 20
+
+# The grid marks square mile boundaries.
+# Disabled here because it ends up looking a bit busy.
+# grid:
+#     color: "#cccccc"
+#     line_width: 0.5
+#     alpha: 0.5
+#     linestyle: "-"
+
+streets:
+    # color: "#d8d1cb"  # some kind of gray
+    color: *black
+    line_width: 0.5
+    alpha: 0.9
+    clip: true
+
+bike:
+    lane_color: *orange
+    cycleway_line_width: 3
+    cycleway_alpha: 1
+    bike_lane_line_width: 1
+    bike_lane_alpha: 1
+    clip: true
+
+neighborhoods:
+    boundary_color: *black
+    bgcolor: "#ffffff"
+    boundary_line_width: 4
+    alpha: 1
+
+water:
+    color: *water
+    alpha: 1
+
+park:
+    color: *green
+    alpha: 1
+
+cemetery:
+    color: *cemetery
+    alpha: 1
+    line_width: 0.5
+
+# ghost_bike:
+#     color: "#ff9300"
+#     alpha: 1
+#     marker_size: 50
+
+text:
+    display: none
+    color: "#222222"
+    bgcolor: "white"
+    size: 20
