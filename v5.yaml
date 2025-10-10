@@ -41,9 +41,7 @@ zorders:
 #     linestyle: "-"
 
 streets:
-    # Streets are laid before neighborhoods, which use a 
-    # white background with an alpha. So use a dark color here.
-    color: "#cccccc"
+    color: "#dddddd"
     line_width: 1.5
     alpha: 1
     clip_to_city: true
@@ -51,9 +49,9 @@ streets:
 bike:
     lane_color: *orange
     cycleway_line_width: 3
-    cycleway_alpha: 1
+    cycleway_alpha: 0.3
     bike_lane_line_width: 1
-    bike_lane_alpha: 0.5
+    bike_lane_alpha: 1
     clip: true
 
 neighborhoods:
