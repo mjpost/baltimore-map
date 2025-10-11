@@ -290,11 +290,11 @@ def main(args):
         # tags = {"highway": "cycleway", "route": "bicycle"}
         tags = {
             'highway': 'cycleway',
-            "route": "bicycle",
+            # "route": "bicycle",
             # 'cycleway:right': True,
             # 'cycleway:left': True,
             # 'cycleway:both': True,
-            'bicycle': 'designated',
+            'bicycle': ['designated'],  # used to have 'yes' here too, but that's too much
         }
         gdf_cycleways = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
         # remove points
