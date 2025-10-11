@@ -456,8 +456,11 @@ def main(args):
             )
 
     pdf_file = f"{placename}-{args.data_file.replace('.yaml', '')}.pdf"
-    print(f"Saving figure to {pdf_file}")
+    jpg_file = pdf_file.replace(".pdf", ".jpg")
+    print(f"Saving figure to {pdf_file} and {jpg_file}")
+    print(f"Saving figure to {jpg_file}")
     fig.savefig(pdf_file, dpi=300, pad_inches=0.0)
+    fig.savefig(jpg_file, dpi=300, pad_inches=0.0)
 
 
 if __name__ == "__main__":
