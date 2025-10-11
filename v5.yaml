@@ -18,8 +18,8 @@ general:
     # Add extra horizontal space. The extra vertical space is then
     # determined by the paper ratio (2:3).
     margin:
-        west: 1.5
-        east: 1.5
+        west: 1
+        east: 1
         # (decimal) percentage of extra vertical space to assign to the north
         north: 0.3
 
@@ -48,7 +48,7 @@ streets:
 
 bike:
     lane_color: *orange
-    cycleway_line_width: 3
+    cycleway_line_width: 4
     cycleway_alpha: 0.3
     bike_lane_line_width: 1
     bike_lane_alpha: 1
@@ -58,7 +58,7 @@ neighborhoods:
     boundary_color: "#444444"
     bgcolor: "#ffffff"
     boundary_line_width: 3
-    alpha: 0.5
+    alpha: 0.8
 
 water:
     color: *water
