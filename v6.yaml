@@ -4,10 +4,11 @@ color_method: none
 # with its styling attributes grouped together.
 
 palette:
+    # cool greens
+    green: &park "#C2DD9A"
+    blue: &water "#95B298"
     black: &black "#000000"
-    green: &green "#C2DD9A"
     teal: "#00c3e4"
-    blue: &water "#B0CAE2"
     orange: &orange "#FD992E"
     white: "#d7d3eb"
     gray: &cemetery "#D1D1D1"
@@ -22,7 +23,7 @@ general:
         west: 1.75
         east: 1.75
         # (decimal) percentage of extra vertical space to assign to the north
-        north: 0.4
+        north: 0.25
 
 zorders:
     water: 1
@@ -47,13 +48,13 @@ streets:
     alpha: 1
     clip_to_city: true
 
-bike:
-    lane_color: *orange
-    cycleway_line_width: 4
-    cycleway_alpha: 0.3
-    bike_lane_line_width: 1
-    bike_lane_alpha: 1
-    clip: true
+# bike:
+#     lane_color: *orange
+#     cycleway_line_width: 4
+#     cycleway_alpha: 0.3
+#     bike_lane_line_width: 1
+#     bike_lane_alpha: 1
+#     clip: true
 
 neighborhoods:
     boundary_color: "#444444"
@@ -66,7 +67,7 @@ water:
     alpha: 1
 
 park:
-    color: *green
+    color: *park
     alpha: 1
 
 cemetery:
