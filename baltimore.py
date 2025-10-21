@@ -273,16 +273,18 @@ def main(args):
     # Clip streets to the combined neighborhoods geometry before plotting
     city_polygon = gdf_neighborhoods.union_all()
 
-    if cfg["streets"].get("clip_to_city", False):
-        gdf_streets = gpd.clip(gdf_streets, city_polygon)
 
-    gdf_streets.plot(
-        ax=ax,
-        ec=cfg["streets"]["color"],
-        linewidth=cfg["streets"]["line_width"],
-        alpha=cfg["streets"]["alpha"],
-        zorder=cfg["zorders"]["streets"]
-    )
+    if cfg["streets"]:
+        if cfg["streets"].get("clip_to_city", False):
+            gdf_streets = gpd.clip(gdf_streets, city_polygon)
+
+        gdf_streets.plot(
+            ax=ax,
+            ec=cfg["streets"]["color"],
+            linewidth=cfg["streets"]["line_width"],
+            alpha=cfg["streets"]["alpha"],
+            zorder=cfg["zorders"]["streets"]
+        )
 
     # cycleways get plotted quite thick and blurry, with the darker lane on top of them
     # tags = {"network": "lcn", "route": "bicycle"}
