@@ -217,6 +217,7 @@ def main(args):
         "water",
         "park",
         "cemetery",
+        "districts",
         "bike",
         "ghost_bike",
         "text",
@@ -284,6 +285,20 @@ def main(args):
             linewidth=cfg["streets"]["line_width"],
             alpha=cfg["streets"]["alpha"],
             zorder=cfg["zorders"]["streets"]
+        )
+
+    if cfg["districts"]:
+        district_file = cfg["districts"].get("file", "data/Baltimore_City_Council_Districts.geojson")
+        gdf_districts = gpd.read_file(district_file)
+        gdf_districts.crs = common_crs
+
+        gdf_districts.plot(
+            ax=ax,
+            facecolor="none",
+            ec=cfg["districts"]["boundary_color"],
+            linewidth=cfg["districts"]["boundary_line_width"],
+            alpha=cfg["districts"]["alpha"],
+            zorder=cfg["zorders"]["districts"],
         )
 
     # cycleways get plotted quite thick and blurry, with the darker lane on top of them
