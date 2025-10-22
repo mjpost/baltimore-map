@@ -236,8 +236,12 @@ def main(args):
     # gdf_drinking_fountains = ox.features.features_from_place(place, tags=tags)
     # gdf_drinking_fountains.crs = common_crs
 
+    width = cfg["general"].get("width", 24)
+    height = cfg["general"].get("height", 36)
+    dpi = cfg["general"].get("dpi", 300)
+
     # Setup the figure and plot
-    fig, ax = plt.subplots(figsize=(24, 36), dpi=300)
+    fig, ax = plt.subplots(figsize=(width, height), dpi=dpi)
     ax.set_facecolor(cfg["general"].get("bgcolor", "white"))
     fig.tight_layout(pad=0)
 
