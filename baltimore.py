@@ -297,6 +297,7 @@ def main(args):
             facecolor="none",
             ec=cfg["districts"]["boundary_color"],
             linewidth=cfg["districts"]["boundary_line_width"],
+            linestyle=cfg["districts"]["linestyle"],
             alpha=cfg["districts"]["alpha"],
             zorder=cfg["zorders"]["districts"],
         )
@@ -475,10 +476,8 @@ def main(args):
     pdf_file = f"{placename}-{args.data_file.replace('.yaml', '')}.pdf"
     image_file = pdf_file.replace(".pdf", ".png")
     print(f"Saving figure to {pdf_file} and {image_file}")
-    print(f"Saving figure to {image_file}")
     fig.savefig(pdf_file, dpi=300, pad_inches=0.0)
     fig.savefig(image_file, dpi=300, pad_inches=0.0)
-
 
 if __name__ == "__main__":
     import argparse
