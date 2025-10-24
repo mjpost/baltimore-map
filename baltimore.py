@@ -226,6 +226,10 @@ def main(args):
 
     gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_list=color_list, color_method=color_method, cfg=cfg)
 
+    for x in args.exclude:
+        if x in cfg:
+            cfg[x] = {}
+
     # cemeteries!
     tags = {"landuse": "cemetery"}
     gdf_cemetery = ox.features.features_from_place(place, tags=tags)
@@ -277,7 +281,6 @@ def main(args):
     # plot the streets, neighborhoods, water, parks, and cemeteries
     # Clip streets to the combined neighborhoods geometry before plotting
     city_polygon = gdf_neighborhoods.union_all()
-
 
     if cfg["streets"]:
         if cfg["streets"].get("clip_to_city", False):
@@ -487,6 +490,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-file", "-d", type=str, default="visit.yaml",)
+    parser.add_argument("--exclude", "-x", nargs="+", help="sections to not plot")
     args = parser.parse_args()
 
     main(args)
