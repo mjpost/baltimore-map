@@ -26,8 +26,8 @@ general:
         north: 0.25
 
 zorders:
-    water: 1
-    park: 5
+    park: 1
+    water: 2
     cemetery: 6
     streets: 10
     neighborhoods: 13
@@ -74,14 +74,3 @@ cemetery:
     color: *cemetery
     alpha: 1
     line_width: 0.5
-
-# ghost_bike:
-#     color: "#ff9300"
-#     alpha: 1
-#     marker_size: 50
-
-text:
-    display: none
-    color: "#222222"
-    bgcolor: "white"
-    size: 20
