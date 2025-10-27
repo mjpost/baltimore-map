@@ -490,7 +490,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-file", "-d", type=str, default="visit.yaml",)
-    parser.add_argument("--exclude", "-x", nargs="+", help="sections to not plot")
+    parser.add_argument("--exclude", "-x", nargs="+", default=[], help="sections to not plot")
     args = parser.parse_args()
 
     main(args)
