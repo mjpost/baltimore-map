@@ -6,10 +6,11 @@ streets and neighborhoods.
 It was used as the base of my Baltimore City Neighborhoods poster, which
 I manually post-edited with a title, legend, and other information.
 
-© 2023–2025 Matt Post
+© 2023–2026 Matt Post
 """
 
 import hashlib
+import math
 from pathlib import Path
 import random
 import osmnx as ox
@@ -269,6 +270,10 @@ def main(args):
     ax.xaxis.set_ticks_position("none")
     ax.yaxis.set_ticks_position("none")
     
+    # ax.tick_params(axis="both", direction="out", length=6, width=2, color="#cccccc", pad=10)
+    # # use three decimal places for the axis tick labels
+    # ax.xaxis.set_major_formatter(plt.FormatStrFormatter("%.3f"))
+
     # draw gridlines every one mile
     one_mile = lat_lon_dist(one_mile_lat, one_mile_lon(abs(north - south) / 2))
     ax.xaxis.set_major_locator(plt.MultipleLocator(one_mile.x))
@@ -441,6 +446,17 @@ def main(args):
         }
         return rename_map.get(name, name)
 
+    # Print the geographic centroid of each neighborhood (lat, lon) for reference.
+    centroid_assignments = []
+    for _, row in gdf_neighborhoods.iterrows():
+        centroid = row.geometry.centroid
+        centroid_assignments.append((maybe_rename(row["Name"]), centroid.y, centroid.x))
+
+    centroid_assignments.sort(key=lambda item: item[0])
+    print("Neighborhood centroids (lat, lon):")
+    for name, lat, lon in centroid_assignments:
+        print(f"  {name}: {lat:.3f}, {lon:.3f}")
+
     names = [maybe_rename(name) for name in gdf_neighborhoods["Name"]]
     ids = { name: str(i) for i, name in enumerate(sorted(names), 1) }
 
@@ -489,7 +505,7 @@ def main(args):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-file", "-d", type=str, default="visit.yaml",)
+    parser.add_argument("data_file", type=str, default="visit.yaml",)
     parser.add_argument("--exclude", "-x", nargs="+", default=[], help="sections to not plot")
     args = parser.parse_args()
 
