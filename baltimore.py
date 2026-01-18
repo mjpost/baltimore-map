@@ -23,6 +23,7 @@ import numpy as np
 
 from matplotlib import patheffects as pe
 from matplotlib.collections import LineCollection
+from matplotlib.patches import Rectangle
 
 from common import *
 
@@ -89,6 +90,7 @@ def init_baltimore(color_list=["gray"], color_method="random", cfg={}):
 
     # adjust the lat/long boundaries to get to a 1.5 height:width ratio
     west, south, east, north = gdf_neighborhoods.total_bounds
+    city_bounds = (west, south, east, north)
     # print the number of rows in gdf_neighborhoods
     logger.info(f"Number of neighborhoods: {len(gdf_neighborhoods)}")
     logger.info(f"City boundaries: {gdf_neighborhoods.total_bounds}")
@@ -131,7 +133,7 @@ def init_baltimore(color_list=["gray"], color_method="random", cfg={}):
     gdf_streets = ox.graph_to_gdfs(G, nodes=False, edges=True, node_geometry=False, fill_edge_geometry=True)
     gdf_streets = gdf_streets.to_crs(common_crs)
 
-    return gdf_neighborhoods, gdf_streets, west, south, east, north
+    return gdf_neighborhoods, gdf_streets, west, south, east, north, city_bounds
 
 
 def cache_graph(west, south, east, north, network_type, retain_all=True):
@@ -184,6 +186,18 @@ def draw_nautical_lines(ax, bounds, spacing=0.01, angle=45, color='white', alpha
     ax.add_collection(line_collection)
 
 
+def build_aligned_ticks(anchor, step, lower, upper):
+    """Return tick positions covering [lower, upper] while aligned to anchor."""
+    if step <= 0:
+        raise ValueError("step must be positive")
+    eps = step * 0.01
+    forward = np.arange(anchor, upper + step + eps, step)
+    backward = np.arange(anchor - step, lower - step - eps, -step)
+    ticks = np.concatenate((forward, backward))
+    ticks = ticks[(ticks >= lower - eps) & (ticks <= upper + eps)]
+    return np.unique(np.round(ticks, 12))
+
+
 def main(args):
     place = "Baltimore, MD"
     placename = "baltimore"
@@ -225,7 +239,8 @@ def main(args):
     ]:
         cfg.setdefault(section, {})
 
-    gdf_neighborhoods, gdf_streets, west, south, east, north = init_baltimore(color_list=color_list, color_method=color_method, cfg=cfg)
+    gdf_neighborhoods, gdf_streets, west, south, east, north, city_bounds = init_baltimore(color_list=color_list, color_method=color_method, cfg=cfg)
+    city_west, city_south, city_east, city_north = city_bounds
 
     for x in args.exclude:
         if x in cfg:
@@ -249,9 +264,11 @@ def main(args):
     fig, ax = plt.subplots(figsize=(width, height), dpi=dpi)
     ax.set_facecolor(cfg["general"].get("bgcolor", "white"))
     fig.tight_layout(pad=0)
+    # fig.subplots_adjust(left=0.03, right=0.99, bottom=0.04, top=0.99)
 
     ax.set_xlim(west, east)
     ax.set_ylim(south, north)
+    ax.add_patch(Rectangle((west, south), east - west, north - south, linewidth=0, facecolor="none"))
 
     # print the x and y axis as a faint grid
     if cfg["grid"]:
@@ -262,26 +279,39 @@ def main(args):
             alpha=cfg["grid"]["alpha"]
         )
 
-    # turn off axis labels
-    ax.set_xticklabels([])
-    ax.set_yticklabels([])
+    # show axis tick labels with 2-decimal formatting for coordinates
+    # formatter = plt.FormatStrFormatter("%.2f")
+    # ax.xaxis.set_major_formatter(formatter)
+    # ax.yaxis.set_major_formatter(formatter)
 
-    # turn off the ticks on both axes
-    ax.xaxis.set_ticks_position("none")
-    ax.yaxis.set_ticks_position("none")
-    
-    # ax.tick_params(axis="both", direction="out", length=6, width=2, color="#cccccc", pad=10)
-    # # use three decimal places for the axis tick labels
-    # ax.xaxis.set_major_formatter(plt.FormatStrFormatter("%.3f"))
+    # ax.tick_params(axis="both", direction="out", length=6, width=1, colors="#666666", pad=4)
+    # ax.xaxis.set_ticks_position("top")
+    # ax.xaxis.set_label_position("top")
+
+    # anchor the axes to the city's top-left corner rather than the padded map bounds
+    ax.spines["top"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.spines["top"].set_position(("data", city_north))
+    ax.spines["left"].set_position(("data", city_west))
+    ax.spines["top"].set_color("#666666")
+    ax.spines["left"].set_color("#666666")
+    ax.spines["top"].set_linewidth(1)
+    ax.spines["left"].set_linewidth(1)
+    # ax.spines["right"].set_visible(False)
+    # ax.spines["bottom"].set_visible(False)
 
     # draw gridlines every one mile
     one_mile = lat_lon_dist(one_mile_lat, one_mile_lon(abs(north - south) / 2))
     ax.xaxis.set_major_locator(plt.MultipleLocator(one_mile.x))
     ax.yaxis.set_major_locator(plt.MultipleLocator(one_mile.y))
 
-    # turn off the axis perimeter line
-    for spine in ax.spines.values():
-        spine.set_visible(False)
+    # align grid to the city's northwest corner, but extend ticks across the full canvas
+    x_ticks = build_aligned_ticks(city_west, one_mile.x, west, east)
+    y_ticks = build_aligned_ticks(city_north, one_mile.y, south, north)
+    ax.set_xticks(x_ticks)
+    ax.set_yticks(y_ticks)
+    ax.tick_params(axis="x", which="both", bottom=False, top=False, labelbottom=False, labeltop=False)
+    ax.tick_params(axis="y", which="both", left=False, right=False, labelleft=False, labelright=False)
 
     # plot the streets, neighborhoods, water, parks, and cemeteries
     # Clip streets to the combined neighborhoods geometry before plotting
@@ -453,9 +483,9 @@ def main(args):
         centroid_assignments.append((maybe_rename(row["Name"]), centroid.y, centroid.x))
 
     centroid_assignments.sort(key=lambda item: item[0])
-    print("Neighborhood centroids (lat, lon):")
+    # print("Neighborhood centroids (lat, lon):")
     for name, lat, lon in centroid_assignments:
-        print(f"  {name}: {lat:.3f}, {lon:.3f}")
+        print(name, f"{lat:.2f}", f"{lon:.3f}", sep="\t")
 
     names = [maybe_rename(name) for name in gdf_neighborhoods["Name"]]
     ids = { name: str(i) for i, name in enumerate(sorted(names), 1) }
@@ -499,8 +529,8 @@ def main(args):
     pdf_file = f"{placename}-{args.data_file.replace('.yaml', '')}.pdf"
     image_file = pdf_file.replace(".pdf", ".png")
     print(f"Saving figure to {pdf_file} and {image_file}")
-    fig.savefig(pdf_file, dpi=300, pad_inches=0.0)
-    fig.savefig(image_file, dpi=300, pad_inches=0.0)
+    fig.savefig(pdf_file, dpi=300, pad_inches=0.0, bbox_inches="tight")
+    fig.savefig(image_file, dpi=300, pad_inches=0.0, bbox_inches="tight")
 
 if __name__ == "__main__":
     import argparse
