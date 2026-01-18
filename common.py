@@ -6,9 +6,9 @@ from collections import namedtuple
 lat_lon_dist = namedtuple('lat_lon_dist', ['y', 'x'])
 
 # one mile in latitude, longitude degrees
-one_mile_lat = 0.01446
+one_mile_lat = 1 / 69.0
 def one_mile_lon(lat):
-    return 0.0144927536231884 * math.cos(lat * math.pi / 180)
+    return one_mile_lat * math.cos(math.radians(lat))
 
 # one km in latitude, longitude degrees
 one_km = lat_lon_dist(0.008983, 0.0113636)

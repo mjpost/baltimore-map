@@ -3,10 +3,21 @@ color_method: none
 # Object-oriented configuration: each top-level key represents a map layer or visual element
 # with its styling attributes grouped together.
 
+# Primary suggestion	#B9C8D3	Desaturated blue-gray; reads “water” but stays quiet.
+# Slightly greener variant	#B6C7C2	Leans toward teal, harmonizes more tightly with your park green.
+# Cooler gray option	#C2CCD2	If you want it almost neutral, minimal color cast.
+# Print-safe darkening	#A7BBC8	If proofs come out too light; better contrast against land.
+
 palette:
-    # cool greens
+    # brigher green
+    # green: &park "#C2DD9A"
+    # cooler green
+    # green: &park "#B6C7C2"
     green: &park "#C2DD9A"
+    # water: green
     blue: &water "#95B298"
+    # water: blue
+    # blue: &water "#A7BBC8"
     black: &black "#000000"
     teal: "#00c3e4"
     orange: &orange "#FD992E"
@@ -15,7 +26,9 @@ palette:
     baltimore_gold: &baltimore_gold "#c79102"  # baltimore yellow/gold
 
 general:
-    bgcolor: white
+    # create (Chat's top pick)
+    # bgcolor: "#EFE8D8"
+    bgcolor: "#F4EFE3"
     network: "drive"  # all, all_public, drive, walk, bike
     # Add extra horizontal space. The extra vertical space is then
     # determined by the paper ratio (2:3).
@@ -23,14 +36,14 @@ general:
         west: 1.75
         east: 1.75
         # (decimal) percentage of extra vertical space to assign to the north
-        north: 0.25
+        north: 0.35
 
 zorders:
-    water: 1
-    park: 5
+    park: 1
+    water: 2
     cemetery: 6
     streets: 10
-    # districts: 12
+    districts: 12
     neighborhoods: 13
     districts: 14
     bike: 15
@@ -39,24 +52,25 @@ zorders:
 # The grid marks square mile boundaries.
 # Disabled here because it ends up looking a bit busy.
 grid:
-    color: "#cccccc"
+    # color: "#cccccc"
+    color: "#D7D2C8"
     line_width: 0.5
     alpha: 0.5
     linestyle: "-"
 
-# streets:
-#     color: "#dddddd"
-#     line_width: 1.5
-#     alpha: 1
-#     clip_to_city: true
+streets:
+    color: "#dddddd"
+    line_width: 1
+    alpha: 1
+    clip_to_city: true
 
-# bike:
-#     lane_color: *orange
-#     cycleway_line_width: 4
-#     cycleway_alpha: 0.3
-#     bike_lane_line_width: 1
-#     bike_lane_alpha: 1
-#     clip: true
+bike:
+    lane_color: *orange
+    cycleway_line_width: 4
+    cycleway_alpha: 0.3
+    bike_lane_line_width: 1
+    bike_lane_alpha: 1
+    clip: true
 
 neighborhoods:
     boundary_color: "#444444"
@@ -73,16 +87,16 @@ districts:
     # black/gray
     boundary_color: "#999999"
     alpha: 0.3
-    boundary_line_width: 15
+    boundary_line_width: 13
     linestyle: "-"
 
 water:
     color: *water
     alpha: 1
 
-# park:
-#     color: *park
-#     alpha: 1
+park:
+    color: *park
+    alpha: 1
 
 cemetery:
     color: *cemetery
