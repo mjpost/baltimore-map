@@ -23,7 +23,6 @@ import numpy as np
 
 from matplotlib import patheffects as pe
 from matplotlib.collections import LineCollection
-from matplotlib.patches import Rectangle
 
 from common import *
 
@@ -264,11 +263,10 @@ def main(args):
     fig, ax = plt.subplots(figsize=(width, height), dpi=dpi)
     ax.set_facecolor(cfg["general"].get("bgcolor", "white"))
     fig.tight_layout(pad=0)
-    # fig.subplots_adjust(left=0.03, right=0.99, bottom=0.04, top=0.99)
+    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
 
     ax.set_xlim(west, east)
     ax.set_ylim(south, north)
-    ax.add_patch(Rectangle((west, south), east - west, north - south, linewidth=0, facecolor="none"))
 
     # print the x and y axis as a faint grid
     if cfg["grid"]:
@@ -279,10 +277,9 @@ def main(args):
             alpha=cfg["grid"]["alpha"]
         )
 
-    # show axis tick labels with 2-decimal formatting for coordinates
-    # formatter = plt.FormatStrFormatter("%.2f")
-    # ax.xaxis.set_major_formatter(formatter)
-    # ax.yaxis.set_major_formatter(formatter)
+    formatter = plt.FormatStrFormatter("%.2f")
+    ax.xaxis.set_major_formatter(formatter)
+    ax.yaxis.set_major_formatter(formatter)
 
     # ax.tick_params(axis="both", direction="out", length=6, width=1, colors="#666666", pad=4)
     # ax.xaxis.set_ticks_position("top")
@@ -310,8 +307,10 @@ def main(args):
     y_ticks = build_aligned_ticks(city_north, one_mile.y, south, north)
     ax.set_xticks(x_ticks)
     ax.set_yticks(y_ticks)
-    ax.tick_params(axis="x", which="both", bottom=False, top=False, labelbottom=False, labeltop=False)
-    ax.tick_params(axis="y", which="both", left=False, right=False, labelleft=False, labelright=False)
+    ticks_visible = cfg["grid"].get("ticks_visible", False)
+
+    ax.tick_params(axis="x", which="both", bottom=False, top=ticks_visible, labelbottom=False, labeltop=ticks_visible)
+    ax.tick_params(axis="y", which="both", left=ticks_visible, right=False, labelleft=ticks_visible, labelright=False)
 
     # plot the streets, neighborhoods, water, parks, and cemeteries
     # Clip streets to the combined neighborhoods geometry before plotting
@@ -485,7 +484,7 @@ def main(args):
     centroid_assignments.sort(key=lambda item: item[0])
     # print("Neighborhood centroids (lat, lon):")
     for name, lat, lon in centroid_assignments:
-        print(name, f"{lat:.2f}", f"{lon:.3f}", sep="\t")
+        print(name, f"{lat:.2f}", f"{lon:.2f}", sep="\t")
 
     names = [maybe_rename(name) for name in gdf_neighborhoods["Name"]]
     ids = { name: str(i) for i, name in enumerate(sorted(names), 1) }
@@ -529,8 +528,8 @@ def main(args):
     pdf_file = f"{placename}-{args.data_file.replace('.yaml', '')}.pdf"
     image_file = pdf_file.replace(".pdf", ".png")
     print(f"Saving figure to {pdf_file} and {image_file}")
-    fig.savefig(pdf_file, dpi=300, pad_inches=0.0, bbox_inches="tight")
-    fig.savefig(image_file, dpi=300, pad_inches=0.0, bbox_inches="tight")
+    fig.savefig(pdf_file, dpi=300, pad_inches=0.0)
+    fig.savefig(image_file, dpi=300, pad_inches=0.0)
 
 if __name__ == "__main__":
     import argparse
