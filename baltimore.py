@@ -10,7 +10,6 @@ I manually post-edited with a title, legend, and other information.
 """
 
 import hashlib
-import math
 from pathlib import Path
 import random
 import osmnx as ox
@@ -485,7 +484,10 @@ def main(args):
     centroid_assignments.sort(key=lambda item: item[0])
     # print("Neighborhood centroids (lat, lon):")
     for name, lat, lon in centroid_assignments:
-        print(name, f"{lat:.2f}", f"{lon:.2f}", sep="\t")
+        lon_frac = f"{lon:.2f}".partition(".")[2]
+        lat_frac = f"{lat:.2f}".partition(".")[2]
+        print(f"{name} (←{lon_frac} ↑{lat_frac}) ", sep="\t", end="")
+    print()
 
     names = [maybe_rename(name) for name in gdf_neighborhoods["Name"]]
     ids = { name: str(i) for i, name in enumerate(sorted(names), 1) }
