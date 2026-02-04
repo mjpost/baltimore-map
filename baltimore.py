@@ -94,7 +94,8 @@ def init_baltimore(color_list=["gray"], color_method="random", cfg={}):
     logger.info(f"Number of neighborhoods: {len(gdf_neighborhoods)}")
     logger.info(f"City boundaries: {gdf_neighborhoods.total_bounds}")
 
-    one_mile = lat_lon_dist(one_mile_lat, one_mile_lon(abs(north - south) / 2))
+    one_mile = lat_lon_dist(one_mile_lat, one_mile_lon(abs(north + south) / 2))
+    print(f"One mile in degrees: lat {one_mile.y}, lon {one_mile.x}", file=sys.stderr)
 
     west -= one_mile.x * cfg["general"]["margin"].get("west", 0)
     east += one_mile.x * cfg["general"]["margin"].get("east", 0)
@@ -298,7 +299,7 @@ def main(args):
     # ax.spines["bottom"].set_visible(False)
 
     # draw gridlines every one mile
-    one_mile = lat_lon_dist(one_mile_lat, one_mile_lon(abs(north - south) / 2))
+    one_mile = lat_lon_dist(one_mile_lat, one_mile_lon((north + south) / 2))
     ax.xaxis.set_major_locator(plt.MultipleLocator(one_mile.x))
     ax.yaxis.set_major_locator(plt.MultipleLocator(one_mile.y))
 

@@ -5,10 +5,11 @@ from collections import namedtuple
 
 lat_lon_dist = namedtuple('lat_lon_dist', ['y', 'x'])
 
-# one mile in latitude, longitude degrees
-one_mile_lat = 1 / 69.0
+# one mile in latitude, longitude degrees (approx; varies slightly with latitude)
+MILES_PER_DEGREE_LAT = 69.172  # USGS mean radius approximation
+one_mile_lat = 1 / MILES_PER_DEGREE_LAT
 def one_mile_lon(lat):
-    return one_mile_lat * math.cos(math.radians(lat))
+    return 1 / (MILES_PER_DEGREE_LAT * math.cos(math.radians(lat)))
 
 # one km in latitude, longitude degrees
 one_km = lat_lon_dist(0.008983, 0.0113636)
