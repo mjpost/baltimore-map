@@ -525,7 +525,7 @@ def main(args):
                 ],
             )
 
-    pdf_file = f"{placename}-{args.data_file.replace('.yaml', '')}.pdf"
+    pdf_file = f"{args.output_directory}/{placename}-{args.data_file.replace('.yaml', '')}.pdf"
     image_file = pdf_file.replace(".pdf", ".png")
     print(f"Saving figure to {pdf_file} and {image_file}")
     fig.savefig(pdf_file, dpi=300, pad_inches=0.0)
@@ -535,6 +535,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("data_file", type=str, default="visit.yaml",)
+    parser.add_argument("--output-directory", "-d", type=str, default="outputs", help="directory to save output files")
     parser.add_argument("--exclude", "-x", nargs="+", default=[], help="sections to not plot")
     args = parser.parse_args()
 
