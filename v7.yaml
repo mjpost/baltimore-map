@@ -28,15 +28,18 @@ palette:
 general:
     # create (Chat's top pick)
     # bgcolor: "#EFE8D8"
-    bgcolor: "#F4EFE3"
+    # some kind of off white / cream
+    # bgcolor: "#F4EFE3"
+    bgcolor: "none"
+    # bgcolor: "white"
     network: "drive"  # all, all_public, drive, walk, bike
     # Add extra horizontal space. The extra vertical space is then
     # determined by the paper ratio (2:3).
     margin:
-        west: 1.75
-        east: 1.75
+        west: 1.37
+        east: 1.37
         # (decimal) percentage of extra vertical space to assign to the north
-        north: 0.35
+        north: 0.4
 
 zorders:
     park: 1
@@ -50,13 +53,13 @@ zorders:
     text: 20
 
 # The grid marks square mile boundaries.
-# Disabled here because it ends up looking a bit busy.
 grid:
     # color: "#cccccc"
     color: "#D7D2C8"
-    line_width: 0.5
+    line_width: 1
     alpha: 0.5
     linestyle: "-"
+    ticks_visible: false
 
 streets:
     color: "#dddddd"
@@ -87,7 +90,7 @@ districts:
     # black/gray
     boundary_color: "#999999"
     alpha: 0.3
-    boundary_line_width: 13
+    boundary_line_width: 9
     linestyle: "-"
 
 water:
