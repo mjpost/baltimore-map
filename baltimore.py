@@ -10,15 +10,19 @@ I manually post-edited with a title, legend, and other information.
 """
 
 import hashlib
+from collections import OrderedDict
 from pathlib import Path
 import random
 import osmnx as ox
+import osmnx._overpass as overpass
+import osmnx.features as ox_features
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import networkx as nx
 import logging
 import yaml
 import numpy as np
+from osmnx._errors import InsufficientResponseError
 
 from matplotlib import patheffects as pe
 from matplotlib.collections import LineCollection
@@ -346,32 +350,60 @@ def main(args):
     # cycleways get plotted quite thick and blurry, with the darker lane on top of them
     # tags = {"network": "lcn", "route": "bicycle"}
     if cfg["bike"]:
-        # tags = {"highway": "cycleway", "route": "bicycle"}
-        tags = {
-            'highway': 'cycleway',
-            # "route": "bicycle",
-            # 'cycleway:right': True,
-            # 'cycleway:left': True,
-            # 'cycleway:both': True,
-            'bicycle': ['designated'],  # used to have 'yes' here too, but that's too much
-        }
-        gdf_cycleways = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
-        # remove points
-        gdf_cycleways = gdf_cycleways[gdf_cycleways.geometry.type.isin(['LineString', 'MultiLineString'])]
-        gdf_cycleways.crs = common_crs
+        bbox = (west, south, east, north)
+        bbox_poly = ox.utils_geo.bbox_to_poly(bbox)
+        bbox_str = f"{south},{west},{north},{east}"
+        settings = overpass._make_overpass_settings()
 
-        tags = {
-            'highway': 'cycleway',
-            "route": "bicycle",
-            'cycleway:right': True,
-            'cycleway:left': True,
-            'cycleway:both': True,
-            'bicycle': ['designated'],  # used to have 'yes' here too, but that's too much
-        }
-        gdf_bikeable = ox.features.features_from_bbox(bbox=(west, south, east, north), tags=tags)
-        # remove points
-        gdf_bikeable = gdf_bikeable[gdf_bikeable.geometry.type.isin(['LineString', 'MultiLineString'])]
-        gdf_bikeable.crs = common_crs    
+        def empty_lines_gdf():
+            return gpd.GeoDataFrame({"geometry": []}, geometry="geometry", crs=common_crs)
+
+        def fetch_overpass_lines(query):
+            try:
+                response = overpass._overpass_request(OrderedDict([("data", query)]))
+                gdf = ox_features._create_gdf([response], bbox_poly, tags={})
+            except InsufficientResponseError:
+                return empty_lines_gdf()
+            gdf = gdf[gdf.geometry.type.isin(["LineString", "MultiLineString"])]
+            if gdf.empty:
+                return empty_lines_gdf()
+            gdf = gdf.copy()
+            gdf.crs = common_crs
+            return gdf
+
+        lane_regex = r"(^|;)(lane|track|separate|opposite_lane|opposite_track)($|;)"
+        protected_regex = r"(^|;)(track|separate|opposite_track)($|;)"
+
+        bikeable_query = f"""
+{settings};
+(
+  way["highway"="cycleway"]({bbox_str});
+  way["cycleway"~"{lane_regex}"]({bbox_str});
+  way["cycleway:left"~"{lane_regex}"]({bbox_str});
+  way["cycleway:right"~"{lane_regex}"]({bbox_str});
+  way["cycleway:both"~"{lane_regex}"]({bbox_str});
+);
+out body;
+>;
+out skel qt;
+"""
+
+        protected_query = f"""
+{settings};
+(
+  way["highway"="cycleway"]({bbox_str});
+  way["cycleway"~"{protected_regex}"]({bbox_str});
+  way["cycleway:left"~"{protected_regex}"]({bbox_str});
+  way["cycleway:right"~"{protected_regex}"]({bbox_str});
+  way["cycleway:both"~"{protected_regex}"]({bbox_str});
+);
+out body;
+>;
+out skel qt;
+"""
+
+        gdf_bikeable = fetch_overpass_lines(bikeable_query)
+        gdf_cycleways = fetch_overpass_lines(protected_query)
 
         if cfg["bike"]["clip"]:
             gdf_cycleways = gpd.clip(gdf_cycleways, city_polygon)
@@ -451,14 +483,15 @@ def main(args):
     # gdf_neighborhoods.plot(ax=ax, facecolor='none', ec=hood_line_color, linewidth=hood_line_width, alpha=0.9, zorder=10)
 
     # Transparent (no fill) neighborhoods: only draw boundaries
-    gdf_neighborhoods.plot(
-        ax=ax,
-        facecolor="none",  # or facecolor="none"
-        ec=cfg["neighborhoods"]["boundary_color"],
-        linewidth=cfg["neighborhoods"]["boundary_line_width"],
-        alpha=cfg["neighborhoods"]["alpha"],  # now applies to edges only
-        zorder=cfg["zorders"]["neighborhoods"],
-    )
+    if cfg["neighborhoods"]:
+        gdf_neighborhoods.plot(
+            ax=ax,
+            facecolor="none",  # or facecolor="none"
+            ec=cfg["neighborhoods"]["boundary_color"],
+            linewidth=cfg["neighborhoods"]["boundary_line_width"],
+            alpha=cfg["neighborhoods"]["alpha"],  # now applies to edges only
+            zorder=cfg["zorders"]["neighborhoods"],
+        )
 
     # Plot just the city boundary
     # city = ox.geocode_to_gdf("Baltimore, MD")
