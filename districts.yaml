@@ -29,7 +29,7 @@ general:
 
 neighborhoods:
     boundary_color: "#444444"
-    bgcolor: "#ffffff"
+    bgcolor: "none"
     boundary_line_width: 3
     alpha: 0
 
@@ -55,3 +55,7 @@ districts:
     alpha: 1
     boundary_line_width: 3
     linestyle: "-"
+    text:
+        fontsize: 40
+        color: "#333333"
+        weight: "bold"

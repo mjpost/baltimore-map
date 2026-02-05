@@ -1,4 +1,5 @@
 cache/
+cache.bak/
 __pycache__
 venv*
 graph_cache/
