@@ -187,6 +187,73 @@
     background: #FFF3E6;
     color: #FD992E;
   }
+
+  /* District legend */
+  .district-legend {
+    margin-top: 8px;
+    border-top: 1px solid #ddd;
+    padding-top: 8px;
+  }
+  .district-legend-title {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .district-legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 8px;
+  }
+  .district-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 1px 0;
+  }
+  .district-legend-item:hover {
+    color: #FD992E;
+  }
+  .district-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid #bbb;
+    flex-shrink: 0;
+  }
+  .district-rep-info {
+    margin-top: 6px;
+    padding: 6px 8px;
+    background: #f8f8f8;
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 1.4;
+    display: none;
+  }
+  .district-rep-info.visible {
+    display: block;
+  }
+  .district-rep-info .rep-district {
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 2px;
+  }
+  .district-rep-info .rep-name {
+    font-weight: 600;
+  }
+  .district-rep-info a {
+    color: #FD992E;
+    text-decoration: none;
+  }
+  .district-rep-info a:hover {
+    text-decoration: underline;
+  }
+  .district-legend-item.selected {
+    font-weight: 700;
+    color: #FD992E;
+  }
 </style>
 </head>
 <body>
@@ -282,6 +349,24 @@ const DISTRICT_FILLS = {
   "14": "#DDD5ED",  // soft periwinkle
 };
 
+// Council member info per district
+const DISTRICT_REPS = {
+  "1":  {name: "Mark Parker", phone: "410-396-4821", email: "Mark.Parker@baltimorecity.gov"},
+  "2":  {name: "Danielle McCray", phone: "410-396-4808", email: "Danielle.McCray@baltimorecity.gov"},
+  "3":  {name: "Ryan Dorsey", phone: "410-396-4812", email: "Ryan.Dorsey@baltimorecity.gov"},
+  "4":  {name: "Mark Conway", phone: "410-396-4830", email: "Mark.Conway@baltimorecity.gov"},
+  "5":  {name: "Isaac Schleifer", phone: "410-396-4819", email: "Isaac.Schleifer@baltimorecity.gov"},
+  "6":  {name: "Sharon Green Middleton", phone: "410-396-4832", email: "Sharon.Middleton@baltimorecity.gov"},
+  "7":  {name: "James Torrence", phone: "410-396-4810", email: "James.Torrence@baltimorecity.gov"},
+  "8":  {name: "Paris Gray", phone: "410-396-4818", email: "Paris.Gray@baltimorecity.gov"},
+  "9":  {name: "John T. Bullock", phone: "410-396-4815", email: "John.Bullock@baltimorecity.gov"},
+  "10": {name: "Phylicia Porter", phone: "410-396-4822", email: "Phylicia.Porter@baltimorecity.gov"},
+  "11": {name: "Zac Blanchard", phone: "410-396-4816", email: "Zachary.Blanchard@baltimorecity.gov"},
+  "12": {name: "Jermaine Jones", phone: "410-396-4811", email: "Jermaine.Jones@baltimorecity.gov"},
+  "13": {name: "Antonio Glover", phone: "410-396-4829", email: "Antonio.Glover@baltimorecity.gov"},
+  "14": {name: "Odette Ramos", phone: "410-396-4814", email: "Odette.Ramos@baltimorecity.gov"},
+};
+
 const STYLES = {
   neighborhood: {
     color: COLORS.neighborhoodBorder,
@@ -335,6 +420,8 @@ const map = L.map("map", {
 
 // Cross-reference: name → { layer, marker }
 const neighborhoodIndex = {};
+const districtIndex = {};  // AREA_NAME → { layer }
+let selectedDistrict = null;  // currently clicked district
 
 // ── Utility: polygon centroid (lat/lng) ─────────────────────────────
 function geojsonCentroid(feature) {
@@ -435,6 +522,11 @@ Promise.all([
     onEachFeature(feature, layer) {
       const name = feature.properties.AREA_NAME;
       if (!name) return;
+
+      districtIndex[name] = { layer };
+
+      // Click to highlight district
+      layer.on("click", () => selectDistrict(name));
 
       const [lat, lng] = geojsonCentroid(feature);
       const marker = L.marker([lat, lng], {
@@ -608,14 +700,119 @@ Promise.all([
               clearSearchHighlights();
             }
           }
+          // Toggle district legend with Districts
+          if (item.name === "Districts") {
+            districtLegend.style.display = cb.checked ? "" : "none";
+          }
         });
         label.appendChild(cb);
         label.appendChild(document.createTextNode(item.name));
         div.appendChild(label);
       }
 
-      // Append search box after checkboxes
+      // ── District legend ───────────────────────────────────────────
+      const districtLegend = document.createElement("div");
+      districtLegend.className = "district-legend";
+      districtLegend.innerHTML = '<strong class="district-legend-title">City Council Districts</strong>';
+      const grid = document.createElement("div");
+      grid.className = "district-legend-grid";
+      const districtNums = Object.keys(DISTRICT_FILLS).sort((a, b) => +a - +b);
+      for (const num of districtNums) {
+        const item = document.createElement("div");
+        item.className = "district-legend-item";
+        const swatch = document.createElement("div");
+        swatch.className = "district-swatch";
+        swatch.style.backgroundColor = DISTRICT_FILLS[num];
+        item.appendChild(swatch);
+        item.appendChild(document.createTextNode("District " + num));
+        grid.appendChild(item);
+      }
+      districtLegend.appendChild(grid);
+
+      // Rep info panel (below grid, initially hidden)
+      const repInfo = document.createElement("div");
+      repInfo.className = "district-rep-info";
+      repInfo.id = "district-rep-info";
+      districtLegend.appendChild(repInfo);
+
+      // ── District selection logic ──────────────────────────────────
+      // legendItems: num → DOM element for highlight
+      const legendItems = {};
+
+      // Re-build legend items with click handlers
+      grid.innerHTML = "";
+      for (const num of districtNums) {
+        const item = document.createElement("div");
+        item.className = "district-legend-item";
+        const swatch = document.createElement("div");
+        swatch.className = "district-swatch";
+        swatch.style.backgroundColor = DISTRICT_FILLS[num];
+        item.appendChild(swatch);
+        item.appendChild(document.createTextNode("District " + num));
+        item.addEventListener("click", () => selectDistrict(num));
+        grid.appendChild(item);
+        legendItems[num] = item;
+      }
+
+      // Shared select/deselect function
+      window.selectDistrict = function(num) {
+        // Deselect previous
+        if (selectedDistrict) {
+          const prev = districtIndex[selectedDistrict];
+          if (prev) {
+            prev.layer.setStyle({
+              ...STYLES.district,
+              fillColor: DISTRICT_FILLS[selectedDistrict] || "#eeeeee",
+            });
+          }
+          if (legendItems[selectedDistrict]) {
+            legendItems[selectedDistrict].classList.remove("selected");
+          }
+        }
+
+        // Toggle off if same district clicked again
+        if (selectedDistrict === num) {
+          selectedDistrict = null;
+          repInfo.classList.remove("visible");
+          return;
+        }
+
+        selectedDistrict = num;
+
+        // Highlight on map
+        const entry = districtIndex[num];
+        if (entry) {
+          entry.layer.setStyle({
+            color: COLORS.highlight,
+            weight: 4,
+            fillColor: DISTRICT_FILLS[num] || "#eeeeee",
+            fillOpacity: 0.45,
+            opacity: 1,
+            dashArray: "",
+          });
+          entry.layer.bringToFront();
+        }
+
+        // Highlight in legend
+        if (legendItems[num]) {
+          legendItems[num].classList.add("selected");
+        }
+
+        // Show rep info
+        const rep = DISTRICT_REPS[num];
+        if (rep) {
+          repInfo.innerHTML =
+            '<div class="rep-district">District ' + num + '</div>' +
+            '<div class="rep-name">' + rep.name + '</div>' +
+            '<div>' + rep.phone + '</div>' +
+            '<div><a href="mailto:' + rep.email + '">' + rep.email + '</a></div>';
+          repInfo.classList.add("visible");
+        }
+      };
+
+      // Append search box and district legend after checkboxes
       div.appendChild(searchWrapper);
+      div.appendChild(districtLegend);
 
       // Prevent map interactions when clicking control
       L.DomEvent.disableClickPropagation(div);
