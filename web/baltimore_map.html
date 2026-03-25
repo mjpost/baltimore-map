@@ -222,6 +222,12 @@
     border-radius: 2px;
     border: 1px solid #bbb;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #fff;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5);
   }
   .district-rep-info {
     margin-top: 6px;
@@ -745,6 +751,7 @@ Promise.all([
         { name: "Basemap", sublayers: [basemap], on: true },
       ];
 
+      let districtCheckbox = null;
       for (const item of layers) {
         const label = document.createElement("label");
         label.style.display = "block";
@@ -777,6 +784,7 @@ Promise.all([
         });
         label.appendChild(cb);
         label.appendChild(document.createTextNode(item.name));
+        if (item.name === "Districts") districtCheckbox = cb;
         checkboxContainer.appendChild(label);
       }
       div.appendChild(checkboxContainer);
@@ -788,16 +796,6 @@ Promise.all([
       const grid = document.createElement("div");
       grid.className = "district-legend-grid";
       const districtNums = Object.keys(DISTRICT_FILLS).sort((a, b) => +a - +b);
-      for (const num of districtNums) {
-        const item = document.createElement("div");
-        item.className = "district-legend-item";
-        const swatch = document.createElement("div");
-        swatch.className = "district-swatch";
-        swatch.style.backgroundColor = DISTRICT_FILLS[num];
-        item.appendChild(swatch);
-        item.appendChild(document.createTextNode("District " + num));
-        grid.appendChild(item);
-      }
       districtLegend.appendChild(grid);
 
       // Rep info panel (below grid, initially hidden)
@@ -811,6 +809,7 @@ Promise.all([
       const legendItems = {};
 
       // Re-build legend items with click handlers
+      const legendSwatches = {};
       grid.innerHTML = "";
       for (const num of districtNums) {
         const item = document.createElement("div");
@@ -823,6 +822,7 @@ Promise.all([
         item.addEventListener("click", () => selectDistrict(num));
         grid.appendChild(item);
         legendItems[num] = item;
+        legendSwatches[num] = swatch;
       }
 
       // Shared select/deselect function
@@ -839,16 +839,25 @@ Promise.all([
           if (legendItems[selectedDistrict]) {
             legendItems[selectedDistrict].classList.remove("selected");
           }
+          if (legendSwatches[selectedDistrict]) {
+            legendSwatches[selectedDistrict].textContent = "";
+          }
         }
 
         // Toggle off if same district clicked again
         if (selectedDistrict === num) {
           selectedDistrict = null;
+          if (legendSwatches[num]) legendSwatches[num].textContent = "";
           repInfo.classList.remove("visible");
           return;
         }
 
         selectedDistrict = num;
+
+        // Ensure Districts layer is visible
+        if (districtCheckbox && !districtCheckbox.checked) {
+          districtCheckbox.click();
+        }
 
         // Highlight on map
         const entry = districtIndex[num];
@@ -868,15 +877,16 @@ Promise.all([
         if (legendItems[num]) {
           legendItems[num].classList.add("selected");
         }
+        if (legendSwatches[num]) legendSwatches[num].textContent = "\u2713";
 
         // Show rep info
         const rep = DISTRICT_REPS[num];
         if (rep) {
           repInfo.innerHTML =
             '<div class="rep-district">District ' + num + '</div>' +
-            '<div class="rep-name">' + rep.name + '</div>' +
-            '<div>' + rep.phone + '</div>' +
-            '<div><a href="mailto:' + rep.email + '">' + rep.email + '</a></div>';
+            '<div class="rep-name">' + rep.name +
+            ' <a href="mailto:' + rep.email + '" title="' + rep.email + '">\u2709</a></div>' +
+            '<div>' + rep.phone + '</div>';
           repInfo.classList.add("visible");
         }
       };
