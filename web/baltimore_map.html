@@ -118,6 +118,24 @@ const COLORS = {
   highlight: "#FD992E",
 };
 
+// Light pastel fill for each district (keyed by AREA_NAME)
+const DISTRICT_FILLS = {
+  "1":  "#E8D5E0",  // soft mauve
+  "2":  "#D5E3ED",  // soft blue
+  "3":  "#D9EAD3",  // soft green
+  "4":  "#FDE8D0",  // soft peach
+  "5":  "#E0D5EB",  // soft lavender
+  "6":  "#D5EDE0",  // soft mint
+  "7":  "#F5E6D0",  // soft sand
+  "8":  "#D5DBE8",  // soft steel
+  "9":  "#EDE5D5",  // soft cream
+  "10": "#E0E8D5",  // soft sage
+  "11": "#EDD5D5",  // soft rose
+  "12": "#D5E8E8",  // soft teal
+  "13": "#E8E0D5",  // soft khaki
+  "14": "#DDD5ED",  // soft periwinkle
+};
+
 const STYLES = {
   neighborhood: {
     color: COLORS.neighborhoodBorder,
@@ -135,9 +153,8 @@ const STYLES = {
   },
   district: {
     color: COLORS.districtBorder,
-    weight: 3,
-    fillColor: "transparent",
-    fillOpacity: 0,
+    weight: 2,
+    fillOpacity: 0.25,
     opacity: 0.5,
     dashArray: "8 4",
   },
@@ -263,7 +280,10 @@ Promise.all([
   const districtLabelsLayer = L.layerGroup();
 
   const districtsLayer = L.geoJSON(districts, {
-    style: () => STYLES.district,
+    style: (feature) => ({
+      ...STYLES.district,
+      fillColor: DISTRICT_FILLS[feature.properties.AREA_NAME] || "#eeeeee",
+    }),
     onEachFeature(feature, layer) {
       const name = feature.properties.AREA_NAME;
       if (!name) return;
@@ -282,13 +302,14 @@ Promise.all([
     },
   });
 
-  // ── Basemap tile layer (off by default) ─────────────────────────
+  // ── Basemap tile layer (on by default) ──────────────────────
   const basemap = L.tileLayer(
     "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    { maxZoom: 19, opacity: 0.5 }
+    { maxZoom: 19, opacity: 0.4 }
   );
 
   // ── Add default layers ──────────────────────────────────────────
+  basemap.addTo(map);
   parksLayer.addTo(map);
   neighborhoodsLayer.addTo(map);
   neighborhoodLabelsLayer.addTo(map);
@@ -318,7 +339,7 @@ Promise.all([
         { name: "Neighborhoods", sublayers: [neighborhoodsLayer, neighborhoodLabelsLayer], on: true },
         { name: "Districts", sublayers: [districtsLayer, districtLabelsLayer], on: true },
         { name: "Parks", sublayers: [parksLayer], on: true },
-        { name: "Basemap", sublayers: [basemap], on: false },
+        { name: "Basemap", sublayers: [basemap], on: true },
       ];
 
       for (const item of layers) {
