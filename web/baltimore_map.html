@@ -772,6 +772,8 @@ Promise.all([
           if (item.name === "Districts") {
             districtLegend.style.display = cb.checked ? "" : "none";
           }
+          // Re-apply zoom-dependent label visibility after re-adding layers
+          updateLabelVisibility();
         });
         label.appendChild(cb);
         label.appendChild(document.createTextNode(item.name));
