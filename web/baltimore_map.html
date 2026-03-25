@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baltimore Neighborhoods</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; }
+  #map { width: 100%; height: 100%; background: #ffffff; }
+
+  /* Style the layer control */
+  .leaflet-control-layers {
+    background: rgba(255,255,255,0.95);
+    border-radius: 6px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+  }
+
+  /* Neighborhood label styling */
+  .neighborhood-label {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    color: #333;
+    text-align: center;
+    white-space: pre-line;
+    pointer-events: auto !important;
+    line-height: 1.15;
+  }
+  .neighborhood-label:hover {
+    color: #FD992E;
+    font-weight: 700;
+  }
+
+  /* District label styling */
+  .district-label {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #999;
+    text-align: center;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── Display name overrides (from common.py) ─────────────────────────
+const NEIGHBORHOOD_NAMES = {
+  "Belair-Edison": "Belair-Edison",
+  "Broening Manor": "Broening Manor",
+  "Carroll - Camden Industrial Area": "Carroll-Camden\nIndustrial Area",
+  "Carroll-Camden Industrial Area": "Carroll-Camden\nIndustrial Area",
+  "Canton Industrial Area": "Canton Industrial Area",
+  "Cherry Hill": "Cherry Hill",
+  "Clifton Park": "Clifton Park",
+  "Concerned Citizens of Forest Park": "Concerned Citizens\nof Forest Park",
+  "Coppin Heights/Ash-Co-East": "Coppin Heights/\nAsh-Co-East",
+  "Curtis Bay Industrial Area": "Curtis Bay\nIndustrial Area",
+  "Easterwood": "Easterwood",
+  "Fairfield Area": "Fairfield Area",
+  "Forest Park Golf Course": "Forest Park\nGolf Course",
+  "Franklintown Road": "Franklintown\nRoad",
+  "Greenmount West": "Greenmount\nWest",
+  "Grove Park": "Grove Park",
+  "Gwynn Falls / Leakin Park": "Gwynn Falls /\nLeakin Park",
+  "Hamilton Hills": "Hamilton Hills",
+  "Hanlon-Longwood": "Hanlon-\nLongwood",
+  "Harlem Park": "Harlem Park",
+  "Howard Park": "Howard Park",
+  "Loch Raven": "Loch Raven",
+  "Locust Point": "Locust Point",
+  "Locust Point Industrial Area": "Locust Point\nIndustrial Area",
+  "Morrell Park": "Morrell Park",
+  "North Roland Park/Poplar Hill": "North Roland Park/\nPoplar Hill",
+  "North Harford Road": "North Harford Road",
+  "Patterson Park Neighborhood": "Patterson Park\nNeighborhood",
+  "Penrose/Fayette Street Outreach": "Penrose/Fayette\nStreet Outreach",
+  "South Clifton Park": "South Clifton Park",
+  "West Hills": "West Hills",
+  "Wilhelm Park": "Wilhelm Park",
+  "Yale Heights": "Yale Heights",
+};
+
+// Label offsets (lon, lat) from common.py
+const NEIGHBORHOOD_OFFSETS = {
+  "Holabird Industrial Park": [0, 0.003],
+  "Locust Point Industrial Area": [0.001, -0.0035],
+  "Penrose/Fayette Street Outreach": [0, 0.0005],
+  "Keswick": [-0.001, 0],
+  "Loyola/Notre Dame": [0.002, 0],
+  "Irvington": [0, 0.002],
+  "West Forest Park": [0, 0.001],
+  "Purnell": [0, 0.0005],
+  "Patterson Park Neighborhood": [0, 0.0005],
+  "Stadium/Entertainment Area": [0.001, 0],
+};
+
+function displayName(name) {
+  if (NEIGHBORHOOD_NAMES[name]) return NEIGHBORHOOD_NAMES[name];
+  // Default: break on spaces, slashes, hyphens (like common.py munge)
+  return name.replace(/ /g, "\n").replace(/\//g, "/\n").replace(/-/g, "-\n");
+}
+
+// ── Colors ──────────────────────────────────────────────────────────
+const COLORS = {
+  neighborhoodFill: "#ffffff",
+  neighborhoodBorder: "#444444",
+  districtBorder: "#999999",
+  parkFill: "#C2DD9A",
+  highlight: "#FD992E",
+};
+
+const STYLES = {
+  neighborhood: {
+    color: COLORS.neighborhoodBorder,
+    weight: 2,
+    fillColor: COLORS.neighborhoodFill,
+    fillOpacity: 0.6,
+    opacity: 0.8,
+  },
+  neighborhoodHighlight: {
+    color: COLORS.highlight,
+    weight: 4,
+    fillColor: COLORS.highlight,
+    fillOpacity: 0.15,
+    opacity: 1,
+  },
+  district: {
+    color: COLORS.districtBorder,
+    weight: 3,
+    fillColor: "transparent",
+    fillOpacity: 0,
+    opacity: 0.5,
+    dashArray: "8 4",
+  },
+  park: {
+    color: "#88aa66",
+    weight: 0.5,
+    fillColor: COLORS.parkFill,
+    fillOpacity: 0.8,
+    opacity: 0.6,
+  },
+};
+
+// ── Map setup ───────────────────────────────────────────────────────
+// Single shared canvas renderer: skips redraws mid-animation, only
+// repaints once the zoom/pan settles.
+const sharedCanvas = L.canvas({
+  padding: 0.3,
+  updateWhenZooming: false,
+  updateWhenIdle: true,
+});
+
+const map = L.map("map", {
+  zoomControl: true,
+  attributionControl: false,
+  renderer: sharedCanvas,
+  zoomSnap: 0.25,
+  zoomDelta: 1,
+  wheelPxPerZoomLevel: 60,
+});
+
+// Cross-reference: name → { layer, marker }
+const neighborhoodIndex = {};
+
+// ── Utility: polygon centroid (lat/lng) ─────────────────────────────
+function geojsonCentroid(feature) {
+  const coords = feature.geometry.type === "Polygon"
+    ? feature.geometry.coordinates[0]
+    : feature.geometry.coordinates[0][0]; // MultiPolygon
+  let sumLng = 0, sumLat = 0, n = coords.length;
+  for (const c of coords) { sumLng += c[0]; sumLat += c[1]; }
+  return [sumLat / n, sumLng / n];
+}
+
+// ── Highlight helpers ───────────────────────────────────────────────
+function highlightNeighborhood(name) {
+  const entry = neighborhoodIndex[name];
+  if (!entry) return;
+  entry.layer.setStyle(STYLES.neighborhoodHighlight);
+  entry.layer.bringToFront();
+  if (entry.marker) {
+    entry.marker.getElement()?.classList.add("neighborhood-label-active");
+  }
+}
+
+function resetNeighborhood(name) {
+  const entry = neighborhoodIndex[name];
+  if (!entry) return;
+  entry.layer.setStyle(STYLES.neighborhood);
+  if (entry.marker) {
+    entry.marker.getElement()?.classList.remove("neighborhood-label-active");
+  }
+}
+
+// ── Load all data and build layers ──────────────────────────────────
+Promise.all([
+  fetch("../data/Baltimore.geojson").then(r => r.json()),
+  fetch("../data/Baltimore_City_Council_Districts.geojson").then(r => r.json()),
+  fetch("../data/baltimore_parks.geojson").then(r => r.json()),
+]).then(([neighborhoods, districts, parks]) => {
+
+  // ── Parks layer ─────────────────────────────────────────────────
+  const parksLayer = L.geoJSON(parks, {
+    style: () => STYLES.park,
+    onEachFeature(feature, layer) {
+      const name = feature.properties.name;
+      if (name) {
+        layer.bindTooltip(name, { sticky: true, className: "park-tooltip" });
+      }
+    },
+  });
+
+  // ── Neighborhoods layer ─────────────────────────────────────────
+  const neighborhoodLabelsLayer = L.layerGroup();
+
+  const neighborhoodsLayer = L.geoJSON(neighborhoods, {
+    style: () => STYLES.neighborhood,
+    onEachFeature(feature, layer) {
+      const name = feature.properties.Name;
+      if (!name) return;
+
+      // Register in index
+      neighborhoodIndex[name] = { layer, marker: null };
+
+      // Hover on polygon
+      layer.on("mouseover", () => highlightNeighborhood(name));
+      layer.on("mouseout", () => resetNeighborhood(name));
+
+      // Create label marker at centroid
+      const [lat, lng] = geojsonCentroid(feature);
+      const offset = NEIGHBORHOOD_OFFSETS[name] || [0, 0];
+      const label = displayName(name);
+
+      const marker = L.marker([lat + offset[1], lng + offset[0]], {
+        icon: L.divIcon({
+          className: "neighborhood-label",
+          html: label.replace(/\n/g, "<br>"),
+          iconSize: [100, 40],
+          iconAnchor: [50, 20],
+        }),
+        interactive: true,
+      });
+
+      // Hover on label → highlight polygon
+      marker.on("mouseover", () => highlightNeighborhood(name));
+      marker.on("mouseout", () => resetNeighborhood(name));
+
+      neighborhoodIndex[name].marker = marker;
+      neighborhoodLabelsLayer.addLayer(marker);
+    },
+  });
+
+  // ── Districts layer ─────────────────────────────────────────────
+  const districtLabelsLayer = L.layerGroup();
+
+  const districtsLayer = L.geoJSON(districts, {
+    style: () => STYLES.district,
+    onEachFeature(feature, layer) {
+      const name = feature.properties.AREA_NAME;
+      if (!name) return;
+
+      const [lat, lng] = geojsonCentroid(feature);
+      const marker = L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: "district-label",
+          html: name,
+          iconSize: [50, 30],
+          iconAnchor: [25, 15],
+        }),
+        interactive: false,
+      });
+      districtLabelsLayer.addLayer(marker);
+    },
+  });
+
+  // ── Basemap tile layer (off by default) ─────────────────────────
+  const basemap = L.tileLayer(
+    "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    { maxZoom: 19, opacity: 0.5 }
+  );
+
+  // ── Add default layers ──────────────────────────────────────────
+  parksLayer.addTo(map);
+  neighborhoodsLayer.addTo(map);
+  neighborhoodLabelsLayer.addTo(map);
+  districtsLayer.addTo(map);
+  districtLabelsLayer.addTo(map);
+
+  // ── Fit bounds to neighborhoods ─────────────────────────────────
+  map.fitBounds(neighborhoodsLayer.getBounds());
+
+  // ── Layer control ───────────────────────────────────────────────
+  const overlays = {
+    "Neighborhoods": L.layerGroup([neighborhoodsLayer, neighborhoodLabelsLayer]),
+    "Districts": L.layerGroup([districtsLayer, districtLabelsLayer]),
+    "Parks": parksLayer,
+    "Basemap": basemap,
+  };
+
+  // Since we can't toggle layerGroups that contain already-added layers via
+  // L.control.layers easily, we manage it ourselves with a simple control.
+  const ToggleControl = L.Control.extend({
+    options: { position: "topright" },
+    onAdd() {
+      const div = L.DomUtil.create("div", "leaflet-control-layers");
+      div.innerHTML = "<strong style='display:block;margin-bottom:6px'>Layers</strong>";
+
+      const layers = [
+        { name: "Neighborhoods", sublayers: [neighborhoodsLayer, neighborhoodLabelsLayer], on: true },
+        { name: "Districts", sublayers: [districtsLayer, districtLabelsLayer], on: true },
+        { name: "Parks", sublayers: [parksLayer], on: true },
+        { name: "Basemap", sublayers: [basemap], on: false },
+      ];
+
+      for (const item of layers) {
+        const label = document.createElement("label");
+        label.style.display = "block";
+        label.style.cursor = "pointer";
+        label.style.padding = "2px 0";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = item.on;
+        cb.style.marginRight = "6px";
+        cb.addEventListener("change", () => {
+          for (const sl of item.sublayers) {
+            if (cb.checked) map.addLayer(sl);
+            else map.removeLayer(sl);
+          }
+        });
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(item.name));
+        div.appendChild(label);
+      }
+
+      // Prevent map interactions when clicking control
+      L.DomEvent.disableClickPropagation(div);
+      L.DomEvent.disableScrollPropagation(div);
+      return div;
+    },
+  });
+
+  map.addControl(new ToggleControl());
+
+  // ── Zoom-dependent label visibility ─────────────────────────────
+  function updateLabelVisibility() {
+    const zoom = map.getZoom();
+    const container = neighborhoodLabelsLayer.getPane
+      ? map.getPane("markerPane")
+      : null;
+
+    // Show neighborhood labels at zoom >= 13
+    if (zoom >= 13) {
+      if (!map.hasLayer(neighborhoodLabelsLayer)) return; // user toggled off
+      neighborhoodLabelsLayer.eachLayer(m => {
+        const el = m.getElement?.();
+        if (el) el.style.display = "";
+      });
+    } else {
+      neighborhoodLabelsLayer.eachLayer(m => {
+        const el = m.getElement?.();
+        if (el) el.style.display = "none";
+      });
+    }
+
+    // Show district labels at zoom >= 11
+    if (zoom >= 11) {
+      if (!map.hasLayer(districtLabelsLayer)) return;
+      districtLabelsLayer.eachLayer(m => {
+        const el = m.getElement?.();
+        if (el) el.style.display = "";
+      });
+    } else {
+      districtLabelsLayer.eachLayer(m => {
+        const el = m.getElement?.();
+        if (el) el.style.display = "none";
+      });
+    }
+  }
+
+  map.on("zoomend", updateLabelVisibility);
+  updateLabelVisibility();
+
+}).catch(err => {
+  console.error("Failed to load GeoJSON data:", err);
+  document.getElementById("map").innerHTML =
+    '<p style="padding:20px;color:red">Failed to load map data. Make sure you are serving this via HTTP (not file://). See console for details.</p>';
+});
+</script>
+</body>
+</html>
