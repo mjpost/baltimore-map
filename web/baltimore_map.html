@@ -72,6 +72,78 @@
     opacity: 0.5;
   }
 
+  /* Custom zoom slider */
+  .zoom-control {
+    background: rgba(255,255,255,0.95);
+    border-radius: 6px;
+    padding: 10px 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+  }
+  .zoom-control button {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    color: #444;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .zoom-control button:hover {
+    background: #f0f0f0;
+  }
+  .zoom-control button:active {
+    background: #e0e0e0;
+  }
+  .zoom-control .zoom-slider-track {
+    width: 4px;
+    height: 150px;
+    background: #ddd;
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+  }
+  .zoom-control .zoom-slider-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #FD992E;
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .zoom-control .zoom-slider-thumb {
+    position: absolute;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    background: #FD992E;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transform: translate(-50%, 50%);
+    pointer-events: none;
+  }
+  .zoom-control .zoom-level {
+    font-size: 11px;
+    color: #666;
+    font-weight: 600;
+    min-width: 24px;
+    text-align: center;
+  }
+
   /* Neighborhood search */
   .neighborhood-search {
     position: relative;
@@ -252,12 +324,14 @@ const sharedCanvas = L.canvas({
 });
 
 const map = L.map("map", {
-  zoomControl: true,
+  zoomControl: false,
   attributionControl: false,
   renderer: sharedCanvas,
-  zoomSnap: 0.25,
+  scrollWheelZoom: true,
+  zoomSnap: 1,
   zoomDelta: 1,
-  wheelPxPerZoomLevel: 60,
+  minZoom: 10,
+  maxZoom: 18,
 });
 
 // Cross-reference: name → { layer, marker }
@@ -552,6 +626,77 @@ Promise.all([
   });
 
   map.addControl(new ToggleControl());
+
+  // ── Custom zoom slider control (top-left) ───────────────────────
+  const ZoomSlider = L.Control.extend({
+    options: { position: "topleft" },
+    onAdd() {
+      const container = L.DomUtil.create("div", "zoom-control");
+
+      const minZoom = map.getMinZoom();
+      const maxZoom = map.getMaxZoom();
+
+      // + button
+      const btnPlus = document.createElement("button");
+      btnPlus.textContent = "+";
+      btnPlus.title = "Zoom in";
+      container.appendChild(btnPlus);
+
+      // Slider track
+      const track = document.createElement("div");
+      track.className = "zoom-slider-track";
+      const fill = document.createElement("div");
+      fill.className = "zoom-slider-fill";
+      const thumb = document.createElement("div");
+      thumb.className = "zoom-slider-thumb";
+      track.appendChild(fill);
+      track.appendChild(thumb);
+      container.appendChild(track);
+
+      // − button
+      const btnMinus = document.createElement("button");
+      btnMinus.textContent = "−";
+      btnMinus.title = "Zoom out";
+      container.appendChild(btnMinus);
+
+      // Zoom level readout
+      const readout = document.createElement("div");
+      readout.className = "zoom-level";
+      container.appendChild(readout);
+
+      function updateSlider() {
+        const zoom = map.getZoom();
+        const pct = (zoom - minZoom) / (maxZoom - minZoom);
+        // pct=1 → top, pct=0 → bottom
+        const trackH = track.offsetHeight || 150;
+        const pos = (1 - pct) * trackH;
+        fill.style.height = (pct * 100) + "%";
+        thumb.style.bottom = (pct * trackH) + "px";
+        readout.textContent = Math.round(zoom);
+      }
+
+      map.on("zoomend", updateSlider);
+      // Initial update after a tick (track needs to be in DOM)
+      setTimeout(updateSlider, 50);
+
+      btnPlus.addEventListener("click", () => map.zoomIn());
+      btnMinus.addEventListener("click", () => map.zoomOut());
+
+      // Click on track to set zoom
+      track.addEventListener("click", (e) => {
+        const rect = track.getBoundingClientRect();
+        const pct = 1 - (e.clientY - rect.top) / rect.height;
+        const zoom = minZoom + pct * (maxZoom - minZoom);
+        map.setZoom(Math.round(zoom));
+      });
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.disableScrollPropagation(container);
+      return container;
+    },
+  });
+
+  map.addControl(new ZoomSlider());
 
   // ── Zoom-dependent label visibility ─────────────────────────────
   function updateLabelVisibility() {
