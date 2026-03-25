@@ -31,9 +31,8 @@
     font-family: "Avenir Next Condensed", "Avenir Next", "Avenir", -apple-system, "Helvetica Neue", sans-serif;
     font-size: 18px;
     font-weight: 400;
-    letter-spacing: 0.2em;
     color: #444;
-    margin: 4px 0 0 2px;
+    margin: 4px 0 0 0;
   }
 
   /* Style the layer control */
@@ -742,6 +741,37 @@ Promise.all([
   document.getElementById("map").innerHTML =
     '<p style="padding:20px;color:red">Failed to load map data. Make sure you are serving this via HTTP (not file://). See console for details.</p>';
 });
+
+// ── Match subtitle kerning to title width ────────────────────────────
+function adjustSubtitleKerning() {
+  const h1 = document.querySelector(".map-title h1");
+  const h2 = document.querySelector(".map-title h2");
+  if (!h1 || !h2) return;
+
+  // Measure h1's actual text width (not block width)
+  h1.style.display = "inline-block";
+  void h1.offsetWidth;
+  const h1Spacing = parseFloat(getComputedStyle(h1).letterSpacing) || 0;
+  const targetWidth = h1.offsetWidth - h1Spacing;
+  h1.style.display = "";
+
+  // Measure h2's natural text width
+  h2.style.letterSpacing = "0px";
+  h2.style.display = "inline-block";
+  void h2.offsetWidth;
+  const naturalWidth = h2.offsetWidth;
+  h2.style.display = "";
+
+  const text = h2.textContent;
+  const gaps = text.length - 1;
+  if (gaps > 0 && targetWidth > naturalWidth) {
+    const extra = (targetWidth - naturalWidth) / gaps;
+    h2.style.letterSpacing = extra + "px";
+  }
+}
+// Run after fonts are loaded so measurements are accurate
+document.fonts.ready.then(adjustSubtitleKerning);
+window.addEventListener("resize", adjustSubtitleKerning);
 </script>
 </body>
 </html>
