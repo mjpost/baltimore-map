@@ -299,6 +299,11 @@
     .district-legend-grid {
       grid-template-columns: 1fr 1fr 1fr;
     }
+    .layers-checkboxes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px 12px;
+    }
     .map-title h1 { font-size: 28px; }
     .map-title h2 { font-size: 12px; }
     .map-title { bottom: 12px; left: 12px; }
@@ -730,6 +735,9 @@ Promise.all([
       });
 
       // ── Layer checkboxes ─────────────────────────────────────────
+      const checkboxContainer = document.createElement("div");
+      checkboxContainer.className = "layers-checkboxes";
+
       const layers = [
         { name: "Neighborhoods", sublayers: [neighborhoodsLayer, neighborhoodLabelsLayer], on: true },
         { name: "Districts", sublayers: [districtsLayer, districtLabelsLayer], on: true },
@@ -767,8 +775,9 @@ Promise.all([
         });
         label.appendChild(cb);
         label.appendChild(document.createTextNode(item.name));
-        div.appendChild(label);
+        checkboxContainer.appendChild(label);
       }
+      div.appendChild(checkboxContainer);
 
       // ── District legend ───────────────────────────────────────────
       const districtLegend = document.createElement("div");
