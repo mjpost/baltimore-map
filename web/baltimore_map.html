@@ -71,6 +71,51 @@
     text-align: center;
     opacity: 0.5;
   }
+
+  /* Neighborhood search */
+  .neighborhood-search {
+    position: relative;
+  }
+  .neighborhood-search input {
+    width: 100%;
+    padding: 5px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+  }
+  .neighborhood-search input:focus {
+    border-color: #FD992E;
+  }
+  .neighborhood-search .dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 10;
+    display: none;
+  }
+  .neighborhood-search .dropdown.open {
+    display: block;
+  }
+  .neighborhood-search .dropdown-item {
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .neighborhood-search .dropdown-item:hover,
+  .neighborhood-search .dropdown-item.active {
+    background: #FFF3E6;
+    color: #FD992E;
+  }
 </style>
 </head>
 <body>
@@ -400,6 +445,117 @@ Promise.all([
   });
 
   map.addControl(new ToggleControl());
+
+  // ── Neighborhood search control ─────────────────────────────────
+  // Collect all names sorted
+  const allNames = Object.keys(neighborhoodIndex).sort(
+    (a, b) => a.localeCompare(b)
+  );
+
+  // Track currently highlighted set from search
+  let searchHighlighted = new Set();
+
+  function clearSearchHighlights() {
+    for (const name of searchHighlighted) {
+      resetNeighborhood(name);
+    }
+    searchHighlighted.clear();
+  }
+
+  function highlightSearchResults(names) {
+    clearSearchHighlights();
+    for (const name of names) {
+      highlightNeighborhood(name);
+      searchHighlighted.add(name);
+    }
+  }
+
+  const SearchControl = L.Control.extend({
+    options: { position: "topright" },
+    onAdd() {
+      const container = L.DomUtil.create("div", "leaflet-control-layers neighborhood-search");
+      container.innerHTML = '<strong style="display:block;margin-bottom:6px">Find neighborhood</strong>';
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = "Type to search...";
+      container.appendChild(input);
+
+      const dropdown = document.createElement("div");
+      dropdown.className = "dropdown";
+      container.appendChild(dropdown);
+
+      function buildDropdown(filter) {
+        dropdown.innerHTML = "";
+        const query = filter.toLowerCase();
+        const matches = query
+          ? allNames.filter(n => n.toLowerCase().includes(query))
+          : allNames;
+
+        if (matches.length === 0) {
+          dropdown.classList.remove("open");
+          return;
+        }
+
+        for (const name of matches.slice(0, 50)) {
+          const item = document.createElement("div");
+          item.className = "dropdown-item";
+          item.textContent = name;
+          item.addEventListener("mouseenter", () => {
+            highlightSearchResults([name]);
+          });
+          item.addEventListener("click", () => {
+            input.value = name;
+            dropdown.classList.remove("open");
+            highlightSearchResults([name]);
+            // Pan to the neighborhood
+            const entry = neighborhoodIndex[name];
+            if (entry && entry.layer.getBounds) {
+              map.fitBounds(entry.layer.getBounds(), { maxZoom: 15, padding: [40, 40] });
+            }
+          });
+          dropdown.appendChild(item);
+        }
+        dropdown.classList.add("open");
+
+        // Highlight all visible matches on the map
+        if (query) {
+          highlightSearchResults(matches);
+        }
+      }
+
+      input.addEventListener("input", () => {
+        buildDropdown(input.value);
+        if (!input.value) clearSearchHighlights();
+      });
+
+      input.addEventListener("focus", () => {
+        if (input.value) buildDropdown(input.value);
+      });
+
+      // Close dropdown when clicking elsewhere
+      document.addEventListener("click", (e) => {
+        if (!container.contains(e.target)) {
+          dropdown.classList.remove("open");
+        }
+      });
+
+      // Clear button behavior: Escape key
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          input.value = "";
+          dropdown.classList.remove("open");
+          clearSearchHighlights();
+        }
+      });
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.disableScrollPropagation(container);
+      return container;
+    },
+  });
+
+  map.addControl(new SearchControl());
 
   // ── Zoom-dependent label visibility ─────────────────────────────
   function updateLabelVisibility() {
