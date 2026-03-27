@@ -200,6 +200,9 @@
     font-size: 12px;
     font-weight: 700;
   }
+  .district-legend-title-short {
+    display: none;
+  }
   .district-legend-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -260,6 +263,35 @@
     font-weight: 700;
     color: #FD992E;
   }
+  .layers-title {
+    display: block;
+    margin-bottom: 6px;
+  }
+  .search-row {
+    display: block;
+  }
+  .search-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .search-label-short {
+    display: none;
+  }
+  .layer-toggle {
+    display: block;
+    cursor: pointer;
+    padding: 2px 0;
+  }
+  .layer-toggle input {
+    margin-right: 6px;
+  }
+  .layer-toggle-label-short {
+    display: none;
+  }
+  .district-label-text-short {
+    display: none;
+  }
 
   /* Mobile top-sheet */
   .layers-toggle-btn {
@@ -282,6 +314,7 @@
   }
 
   @media (max-width: 600px) {
+    /* ── Legend: inline, visible by default, collapsible ── */
     .layers-toggle-btn {
       display: block;
     }
@@ -294,25 +327,118 @@
       border-radius: 0 0 8px 8px;
       max-height: 80vh;
       overflow-y: auto;
-      transform: translateY(-100%);
       transition: transform 0.25s ease;
       padding: 12px 16px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-    }
-    .leaflet-top.leaflet-right .leaflet-control-layers.sheet-open {
       transform: translateY(0);
     }
+    .leaflet-top.leaflet-right .leaflet-control-layers.sheet-closed {
+      transform: translateY(-100%);
+    }
+    .layers-title {
+      display: none;
+    }
+    .district-legend {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 10px;
+    }
+    .district-legend-title {
+      margin-bottom: 0;
+    }
     .district-legend-grid {
-      grid-template-columns: 1fr 1fr 1fr;
+      display: contents;
     }
     .layers-checkboxes {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 12px;
+    }
+    .layer-toggle {
+      padding: 0;
+      white-space: nowrap;
+    }
+    .layer-toggle-label-full {
+      display: none;
+    }
+    .layer-toggle-label-short {
+      display: inline;
+    }
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .search-label {
+      margin-bottom: 0;
+      flex: 0 0 auto;
+    }
+    .search-label-full {
+      display: none;
+    }
+    .search-label-short {
+      display: inline;
+    }
+    .neighborhood-search input {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .district-legend-title-full {
+      display: none;
+    }
+    .district-legend-title-short {
+      display: inline;
+    }
+    .district-legend-item {
+      gap: 4px;
+      padding: 0;
+      white-space: nowrap;
+    }
+    .district-label-text-full {
+      display: none;
+    }
+    .district-label-text-short {
+      display: inline;
+    }
+
+    /* ── Horizontal zoom bar at bottom ── */
+    .leaflet-top.leaflet-left .zoom-control {
+      position: fixed;
+      bottom: 8px;
+      left: 12px;
+      right: 12px;
+      top: auto;
+      flex-direction: row;
+      padding: 6px 10px;
+      border-radius: 6px;
+      z-index: 1000;
+    }
+    .zoom-control .zoom-slider-track {
+      width: auto;
+      height: 4px;
+      flex: 1 1 auto;
+    }
+    .zoom-control .zoom-slider-fill {
+      bottom: 0;
+      left: 0;
+      height: 100% !important;
+      width: auto;
+    }
+    .zoom-control .zoom-slider-thumb {
+      bottom: 50% !important;
+      left: auto;
+      transform: translate(-50%, 50%);
+    }
+
+    /* ── Title above zoom bar ── */
+    .map-title {
+      bottom: 62px;
+      left: 12px;
     }
     .map-title h1 { font-size: 28px; }
     .map-title h2 { font-size: 12px; }
-    .map-title { bottom: 12px; left: 12px; }
   }
 </style>
 </head>
@@ -661,12 +787,12 @@ Promise.all([
       const toggleBtn = document.getElementById("layers-toggle");
       toggleBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        div.classList.toggle("sheet-open");
+        div.classList.toggle("sheet-closed");
       });
       // Close sheet when tapping the map on mobile
-      map.on("click", () => div.classList.remove("sheet-open"));
+      map.on("click", () => div.classList.add("sheet-closed"));
 
-      div.innerHTML = "<strong style='display:block;margin-bottom:6px'>Layers</strong>";
+      div.innerHTML = '<strong class="layers-title">Layers</strong>';
 
       // ── Search box (built first so we can reference it) ──────────
       const searchWrapper = document.createElement("div");
@@ -674,12 +800,14 @@ Promise.all([
       searchWrapper.style.marginTop = "8px";
       searchWrapper.style.borderTop = "1px solid #ddd";
       searchWrapper.style.paddingTop = "8px";
-      searchWrapper.innerHTML = '<strong style="display:block;margin-bottom:4px;font-size:12px">Find neighborhood</strong>';
+      searchWrapper.innerHTML = '<div class="search-row"><strong class="search-label"><span class="search-label-full">Find neighborhood</span><span class="search-label-short">Neighborhood</span></strong></div>';
+
+      const searchRow = searchWrapper.querySelector(".search-row");
 
       const input = document.createElement("input");
       input.type = "text";
       input.placeholder = "Type to search...";
-      searchWrapper.appendChild(input);
+      searchRow.appendChild(input);
 
       const dropdown = document.createElement("div");
       dropdown.className = "dropdown";
@@ -754,13 +882,10 @@ Promise.all([
       let districtCheckbox = null;
       for (const item of layers) {
         const label = document.createElement("label");
-        label.style.display = "block";
-        label.style.cursor = "pointer";
-        label.style.padding = "2px 0";
+        label.className = "layer-toggle";
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.checked = item.on;
-        cb.style.marginRight = "6px";
         cb.addEventListener("change", () => {
           for (const sl of item.sublayers) {
             if (cb.checked) map.addLayer(sl);
@@ -783,7 +908,14 @@ Promise.all([
           updateLabelVisibility();
         });
         label.appendChild(cb);
-        label.appendChild(document.createTextNode(item.name));
+        const fullText = document.createElement("span");
+        fullText.className = "layer-toggle-label-full";
+        fullText.textContent = item.name;
+        label.appendChild(fullText);
+        const shortText = document.createElement("span");
+        shortText.className = "layer-toggle-label-short";
+        shortText.textContent = item.name;
+        label.appendChild(shortText);
         if (item.name === "Districts") districtCheckbox = cb;
         checkboxContainer.appendChild(label);
       }
@@ -792,7 +924,7 @@ Promise.all([
       // ── District legend ───────────────────────────────────────────
       const districtLegend = document.createElement("div");
       districtLegend.className = "district-legend";
-      districtLegend.innerHTML = '<strong class="district-legend-title">City Council Districts</strong>';
+      districtLegend.innerHTML = '<strong class="district-legend-title"><span class="district-legend-title-full">City Council Districts</span><span class="district-legend-title-short">District</span></strong>';
       const grid = document.createElement("div");
       grid.className = "district-legend-grid";
       const districtNums = Object.keys(DISTRICT_FILLS).sort((a, b) => +a - +b);
@@ -818,7 +950,14 @@ Promise.all([
         swatch.className = "district-swatch";
         swatch.style.backgroundColor = DISTRICT_FILLS[num];
         item.appendChild(swatch);
-        item.appendChild(document.createTextNode("District " + num));
+        const fullText = document.createElement("span");
+        fullText.className = "district-label-text-full";
+        fullText.textContent = "District " + num;
+        item.appendChild(fullText);
+        const shortText = document.createElement("span");
+        shortText.className = "district-label-text-short";
+        shortText.textContent = num;
+        item.appendChild(shortText);
         item.addEventListener("click", () => selectDistrict(num));
         grid.appendChild(item);
         legendItems[num] = item;
@@ -944,11 +1083,18 @@ Promise.all([
       function updateSlider() {
         const zoom = map.getZoom();
         const pct = (zoom - minZoom) / (maxZoom - minZoom);
-        // pct=1 → top, pct=0 → bottom
-        const trackH = track.offsetHeight || 150;
-        const pos = (1 - pct) * trackH;
-        fill.style.height = (pct * 100) + "%";
-        thumb.style.bottom = (pct * trackH) + "px";
+        const isHorizontal = track.offsetWidth > track.offsetHeight;
+        if (isHorizontal) {
+          fill.style.height = "";
+          fill.style.width = (pct * 100) + "%";
+          thumb.style.bottom = "";
+          thumb.style.left = (pct * track.offsetWidth) + "px";
+        } else {
+          fill.style.width = "";
+          fill.style.height = (pct * 100) + "%";
+          thumb.style.left = "";
+          thumb.style.bottom = (pct * (track.offsetHeight || 150)) + "px";
+        }
         readout.textContent = Math.round(zoom);
       }
 
@@ -962,7 +1108,10 @@ Promise.all([
       // Click on track to set zoom
       track.addEventListener("click", (e) => {
         const rect = track.getBoundingClientRect();
-        const pct = 1 - (e.clientY - rect.top) / rect.height;
+        const isHorizontal = rect.width > rect.height;
+        const pct = isHorizontal
+          ? (e.clientX - rect.left) / rect.width
+          : 1 - (e.clientY - rect.top) / rect.height;
         const zoom = minZoom + pct * (maxZoom - minZoom);
         map.setZoom(Math.round(zoom));
       });
