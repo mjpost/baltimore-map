@@ -516,9 +516,9 @@ function resetNeighborhood(name) {
 
 // ── Load all data and build layers ──────────────────────────────────
 Promise.all([
-  fetch("../data/Baltimore.geojson").then(r => r.json()),
-  fetch("../data/Baltimore_City_Council_Districts.geojson").then(r => r.json()),
-  fetch("../data/baltimore_parks.geojson").then(r => r.json()),
+  fetch("baltimore_neighborhoods.geojson").then(r => r.json()),
+  fetch("baltimore_districts.geojson").then(r => r.json()),
+  fetch("baltimore_parks.geojson").then(r => r.json()),
 ]).then(([neighborhoods, districts, parks]) => {
 
   // ── Parks layer ─────────────────────────────────────────────────
