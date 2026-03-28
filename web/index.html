@@ -266,6 +266,45 @@
     font-weight: 700;
     color: #FD992E;
   }
+  /* Mode toggle */
+  .mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .mode-toggle-inline-label {
+    display: none;
+  }
+  .mode-toggle-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    white-space: nowrap;
+  }
+  .mode-toggle-label-short {
+    display: none;
+  }
+  .mode-btn {
+    padding: 4px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    color: #444;
+    transition: all 0.15s;
+  }
+  .mode-btn:hover {
+    border-color: #FD992E;
+  }
+  .mode-btn.active {
+    background: #FD992E;
+    border-color: #FD992E;
+    color: #fff;
+    font-weight: 600;
+  }
   .layers-title {
     display: block;
     margin-bottom: 6px;
@@ -280,14 +319,6 @@
   }
   .search-label-short {
     display: none;
-  }
-  .layer-toggle {
-    display: block;
-    cursor: pointer;
-    padding: 2px 0;
-  }
-  .layer-toggle input {
-    margin-right: 6px;
   }
   .layer-toggle-label-short {
     display: none;
@@ -341,6 +372,15 @@
     .layers-title {
       display: none;
     }
+    .mode-toggle {
+      margin-bottom: 6px;
+    }
+    .mode-toggle-inline-label {
+      display: inline;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
     .district-legend {
       display: flex;
       flex-wrap: wrap;
@@ -359,14 +399,10 @@
       align-items: center;
       gap: 6px 12px;
     }
-    .layer-toggle {
-      padding: 0;
-      white-space: nowrap;
-    }
-    .layer-toggle-label-full {
+    .mode-toggle-label-full {
       display: none;
     }
-    .layer-toggle-label-short {
+    .mode-toggle-label-short {
       display: inline;
     }
     .search-row {
@@ -613,6 +649,9 @@ const neighborhoodIndex = {};
 const districtIndex = {};  // AREA_NAME → { layer }
 let selectedDistrict = null;  // currently clicked district
 
+// ── Selection mode (set by legend toggle) ───────────────────────────
+let selectionMode = "neighborhoods";
+
 // ── Utility: polygon centroid (lat/lng) ─────────────────────────────
 function geojsonCentroid(feature) {
   const coords = feature.geometry.type === "Polygon"
@@ -677,6 +716,12 @@ Promise.all([
       layer.on("mouseover", () => highlightNeighborhood(name));
       layer.on("mouseout", () => resetNeighborhood(name));
 
+      // Click on polygon → select if in neighborhoods mode
+      layer.on("click", () => {
+        if (selectionMode !== "neighborhoods") return;
+        if (window.selectNeighborhood) window.selectNeighborhood(name);
+      });
+
       // Create label marker at centroid
       const [lat, lng] = geojsonCentroid(feature);
       const offset = NEIGHBORHOOD_OFFSETS[name] || [0, 0];
@@ -715,8 +760,11 @@ Promise.all([
 
       districtIndex[name] = { layer };
 
-      // Click to highlight district
-      layer.on("click", () => selectDistrict(name));
+      // Click to highlight district (only in districts mode)
+      layer.on("click", () => {
+        if (selectionMode !== "districts") return;
+        selectDistrict(name);
+      });
 
       const [lat, lng] = geojsonCentroid(feature);
       const marker = L.marker([lat, lng], {
@@ -795,7 +843,7 @@ Promise.all([
       // Close sheet when tapping the map on mobile
       map.on("click", () => div.classList.add("sheet-closed"));
 
-      div.innerHTML = '<strong class="layers-title">Layers</strong>';
+      div.innerHTML = '<strong class="layers-title"><span class="mode-toggle-label-full">Clicking selects</span><span class="mode-toggle-label-short">Tapping selects</span></strong>';
 
       // ── Search box (built first so we can reference it) ──────────
       const searchWrapper = document.createElement("div");
@@ -871,56 +919,51 @@ Promise.all([
         }
       });
 
-      // ── Layer checkboxes ─────────────────────────────────────────
-      const checkboxContainer = document.createElement("div");
-      checkboxContainer.className = "layers-checkboxes";
+      // ── Mode toggle (Neighborhoods / Districts) ─────────────────
+      const modeContainer = document.createElement("div");
+      modeContainer.className = "mode-toggle";
 
-      const layers = [
-        { name: "Neighborhoods", sublayers: [neighborhoodsLayer, neighborhoodLabelsLayer], on: true },
-        { name: "Districts", sublayers: [districtsLayer, districtLabelsLayer], on: true },
-      ];
+      const inlineLabel = document.createElement("strong");
+      inlineLabel.className = "mode-toggle-inline-label";
+      inlineLabel.textContent = "Tapping selects";
+      modeContainer.appendChild(inlineLabel);
 
-      let districtCheckbox = null;
-      for (const item of layers) {
-        const label = document.createElement("label");
-        label.className = "layer-toggle";
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.checked = item.on;
-        cb.addEventListener("change", () => {
-          for (const sl of item.sublayers) {
-            if (cb.checked) map.addLayer(sl);
-            else map.removeLayer(sl);
-          }
-          // Toggle search box with Neighborhoods
-          if (item.name === "Neighborhoods") {
-            searchWrapper.style.display = cb.checked ? "" : "none";
-            if (!cb.checked) {
-              input.value = "";
-              dropdown.classList.remove("open");
-              clearSearchHighlights();
-            }
-          }
-          // Toggle district legend with Districts
-          if (item.name === "Districts") {
-            districtLegend.style.display = cb.checked ? "" : "none";
-          }
-          // Re-apply zoom-dependent label visibility after re-adding layers
-          updateLabelVisibility();
-        });
-        label.appendChild(cb);
-        const fullText = document.createElement("span");
-        fullText.className = "layer-toggle-label-full";
-        fullText.textContent = item.name;
-        label.appendChild(fullText);
-        const shortText = document.createElement("span");
-        shortText.className = "layer-toggle-label-short";
-        shortText.textContent = item.name;
-        label.appendChild(shortText);
-        if (item.name === "Districts") districtCheckbox = cb;
-        checkboxContainer.appendChild(label);
+      const btnNeighborhoods = document.createElement("button");
+      btnNeighborhoods.className = "mode-btn active";
+      btnNeighborhoods.textContent = "Neighborhoods";
+      modeContainer.appendChild(btnNeighborhoods);
+
+      const btnDistricts = document.createElement("button");
+      btnDistricts.className = "mode-btn";
+      btnDistricts.textContent = "Districts";
+      modeContainer.appendChild(btnDistricts);
+
+      function setMode(mode) {
+        selectionMode = mode;
+        if (mode === "neighborhoods") {
+          btnNeighborhoods.classList.add("active");
+          btnDistricts.classList.remove("active");
+        } else {
+          btnDistricts.classList.add("active");
+          btnNeighborhoods.classList.remove("active");
+        }
       }
-      div.appendChild(checkboxContainer);
+
+      btnNeighborhoods.addEventListener("click", () => setMode("neighborhoods"));
+      btnDistricts.addEventListener("click", () => setMode("districts"));
+
+      // Neighborhood selection from map click
+      window.selectNeighborhood = function(name) {
+        input.value = name;
+        dropdown.classList.remove("open");
+        highlightSearchResults([name]);
+        const entry = neighborhoodIndex[name];
+        if (entry && entry.layer.getBounds) {
+          map.fitBounds(entry.layer.getBounds(), { maxZoom: 15, padding: [40, 40] });
+        }
+      };
+
+      div.appendChild(modeContainer);
 
       // ── District legend ───────────────────────────────────────────
       const districtLegend = document.createElement("div");
@@ -994,11 +1037,6 @@ Promise.all([
 
         selectedDistrict = num;
 
-        // Ensure Districts layer is visible
-        if (districtCheckbox && !districtCheckbox.checked) {
-          districtCheckbox.click();
-        }
-
         // Highlight on map
         const entry = districtIndex[num];
         if (entry) {
@@ -1031,7 +1069,7 @@ Promise.all([
         }
       };
 
-      // Append search box and district legend after checkboxes
+      // Append search box and district legend after mode toggle
       div.appendChild(searchWrapper);
       div.appendChild(districtLegend);
 
