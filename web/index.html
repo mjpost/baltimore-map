@@ -1079,10 +1079,11 @@ Promise.all([
       btnDistricts.addEventListener("click", () => setMode("districts"));
 
       // Helper: build a horizontal stacked bar
-      function makeBar(segments) {
+      function makeBar(segments, outline) {
         const total = segments.reduce((s, x) => s + x.value, 0);
         if (!total) return '';
-        let html = '<div class="info-bar">';
+        const border = outline ? 'border:1px solid #222;' : '';
+        let html = '<div class="info-bar" style="' + border + '">';
         for (const seg of segments) {
           const pct = (seg.value / total * 100);
           if (pct > 0) html += '<span style="width:' + pct + '%;background:' + seg.color + '" title="' + seg.label + ': ' + seg.value.toLocaleString() + ' (' + Math.round(pct) + '%)"></span>';
@@ -1112,19 +1113,19 @@ Promise.all([
         html += '</div>';
         // Race distribution bar
         html += makeBar([
-          { label: 'Black', value: p.Blk_AfAm || 0, color: '#6a9fd8' },
-          { label: 'White', value: p.White || 0, color: '#e8c170' },
-          { label: 'Asian', value: p.Asian || 0, color: '#7bc17e' },
-          { label: 'Hispanic', value: p.Hisp_Lat || 0, color: '#d48bd4' },
-          { label: 'Two+', value: p.TwoOrMore || 0, color: '#e89070' },
+          { label: 'Black', value: p.Blk_AfAm || 0, color: '#8D5524' },
+          { label: 'White', value: p.White || 0, color: '#FFDBAC' },
+          { label: 'Asian', value: p.Asian || 0, color: '#F1C27D' },
+          { label: 'Hispanic', value: p.Hisp_Lat || 0, color: '#E0AC69' },
+          { label: 'Multi', value: p.TwoOrMore || 0, color: '#C68642' },
           { label: 'Other', value: (p.AmInd_AkNa || 0) + (p.NatHaw_Pac || 0) + (p.Other_Race || 0), color: '#aaa' },
         ]);
         // Housing vacancy bar
         if (p.Housing) {
           html += makeBar([
-            { label: 'Occupied', value: p.Occupied || 0, color: '#7bc17e' },
-            { label: 'Vacant', value: p.Vacant || 0, color: '#d9534f' },
-          ]);
+            { label: 'Occupied', value: p.Occupied || 0, color: '#222' },
+            { label: 'Vacant', value: p.Vacant || 0, color: '#fff' },
+          ], true);
         }
         repInfo.innerHTML = html;
         repInfo.classList.add("visible");
