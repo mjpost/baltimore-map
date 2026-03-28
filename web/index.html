@@ -56,9 +56,12 @@
     pointer-events: auto !important;
     line-height: 1.15;
   }
-  .neighborhood-label:hover {
+  .mode-neighborhoods .neighborhood-label:hover {
     color: #FD992E;
     font-weight: 700;
+  }
+  .mode-districts .neighborhood-label {
+    pointer-events: none !important;
   }
 
   /* District label styling */
@@ -514,7 +517,7 @@
 </style>
 </head>
 <body>
-<div id="map"></div>
+<div id="map" class="mode-neighborhoods"></div>
 <button class="layers-toggle-btn" id="layers-toggle" title="Toggle layers">&#9776;</button>
 <div class="map-title">
   <h1>BALTIMORE</h1>
@@ -1035,6 +1038,9 @@ Promise.all([
 
       function setMode(mode) {
         selectionMode = mode;
+        const container = document.getElementById("map");
+        container.classList.toggle("mode-neighborhoods", mode === "neighborhoods");
+        container.classList.toggle("mode-districts", mode === "districts");
         if (mode === "neighborhoods") {
           btnNeighborhoods.classList.add("active");
           btnDistricts.classList.remove("active");
@@ -1071,9 +1077,6 @@ Promise.all([
         dropdown.classList.remove("open");
         highlightSearchResults([name]);
         const entry = neighborhoodIndex[name];
-        if (entry && entry.layer.getBounds) {
-          map.fitBounds(entry.layer.getBounds(), { maxZoom: 15, padding: [40, 40] });
-        }
         // Build info panel
         const p = entry ? entry.props : null;
         if (!p) { repInfo.classList.remove("visible"); return; }
