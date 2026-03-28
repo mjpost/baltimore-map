@@ -37,8 +37,11 @@ def process(input_name, output_name, keep_props, tolerance):
     new_size = outpath.stat().st_size
     print(f"{input_name} ({orig_size/1024:.0f}K) -> {output_name} ({new_size/1024:.0f}K)  [{100*(1-new_size/orig_size):.0f}% smaller]")
 
-# Baltimore neighborhoods: keep Name, simplify aggressively (tolerance ~0.0001 ≈ 11m)
-process("Baltimore.geojson", "baltimore_neighborhoods.geojson", ["Name"], 0.0001)
+# Baltimore neighborhoods: keep Name + demographics, simplify aggressively (tolerance ~0.0001 ≈ 11m)
+process("Baltimore.geojson", "baltimore_neighborhoods.geojson",
+        ["Name", "Population", "White", "Blk_AfAm", "AmInd_AkNa", "Asian",
+         "NatHaw_Pac", "Other_Race", "TwoOrMore", "Hisp_Lat",
+         "Housing", "Occupied", "Vacant"], 0.0001)
 
 # Districts: keep AREA_NAME, moderate simplification
 process("Baltimore_City_Council_Districts.geojson", "baltimore_districts.geojson", ["AREA_NAME"], 0.0001)
