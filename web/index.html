@@ -75,15 +75,22 @@
   .zoom-control {
     background: rgba(255,255,255,0.95);
     border-radius: 6px;
-    padding: 10px 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    padding: 8px 10px;
+    box-shadow: none;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 12px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     gap: 6px;
     user-select: none;
+    margin-top: 8px;
+    border-top: 1px solid #ddd;
+    padding-top: 8px;
+    width: 100%;
+  }
+  .zoom-control-mobile {
+    display: none;
   }
   .zoom-control button {
     width: 28px;
@@ -107,8 +114,8 @@
     background: #e0e0e0;
   }
   .zoom-control .zoom-slider-track {
-    width: 4px;
-    height: 150px;
+    height: 4px;
+    flex: 1 1 auto;
     background: #ddd;
     border-radius: 2px;
     position: relative;
@@ -118,14 +125,14 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 100%;
+    height: 100%;
     background: #FD992E;
     border-radius: 2px;
     pointer-events: none;
   }
   .zoom-control .zoom-slider-thumb {
     position: absolute;
-    left: 50%;
+    bottom: 50%;
     width: 14px;
     height: 14px;
     background: #FD992E;
@@ -136,11 +143,7 @@
     pointer-events: none;
   }
   .zoom-control .zoom-level {
-    font-size: 11px;
-    color: #666;
-    font-weight: 600;
-    min-width: 24px;
-    text-align: center;
+    display: none;
   }
 
   /* Neighborhood search */
@@ -412,33 +415,24 @@
       display: inline;
     }
 
-    /* ── Horizontal zoom bar at bottom ── */
-    .leaflet-top.leaflet-left .zoom-control {
+    /* ── Zoom bar: fixed to bottom on mobile ── */
+    .leaflet-control-layers .zoom-control {
+      display: none;
+    }
+    .zoom-control-mobile {
+      display: flex;
       position: fixed;
       bottom: 8px;
       left: 12px;
       right: 12px;
-      top: auto;
-      flex-direction: row;
+      width: auto;
+      margin-top: 0;
+      border-top: none;
       padding: 6px 10px;
       border-radius: 6px;
+      background: rgba(255,255,255,0.95);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       z-index: 1000;
-    }
-    .zoom-control .zoom-slider-track {
-      width: auto;
-      height: 4px;
-      flex: 1 1 auto;
-    }
-    .zoom-control .zoom-slider-fill {
-      bottom: 0;
-      left: 0;
-      height: 100% !important;
-      width: auto;
-    }
-    .zoom-control .zoom-slider-thumb {
-      bottom: 50% !important;
-      left: auto;
-      transform: translate(-50%, 50%);
     }
 
     /* ── Title above zoom bar ── */
@@ -1043,31 +1037,18 @@ Promise.all([
       div.appendChild(searchWrapper);
       div.appendChild(districtLegend);
 
-      // Prevent map interactions when clicking control
-      L.DomEvent.disableClickPropagation(div);
-      L.DomEvent.disableScrollPropagation(div);
-      return div;
-    },
-  });
-
-  map.addControl(new ToggleControl());
-
-  // ── Custom zoom slider control (top-left) ───────────────────────
-  const ZoomSlider = L.Control.extend({
-    options: { position: "topleft" },
-    onAdd() {
-      const container = L.DomUtil.create("div", "zoom-control");
+      // ── Zoom slider (inside legend on desktop, bottom bar on mobile) ──
+      const zoomContainer = document.createElement("div");
+      zoomContainer.className = "zoom-control";
 
       const minZoom = map.getMinZoom();
       const maxZoom = map.getMaxZoom();
 
-      // + button
       const btnPlus = document.createElement("button");
       btnPlus.textContent = "+";
       btnPlus.title = "Zoom in";
-      container.appendChild(btnPlus);
+      zoomContainer.appendChild(btnPlus);
 
-      // Slider track
       const track = document.createElement("div");
       track.className = "zoom-slider-track";
       const fill = document.createElement("div");
@@ -1076,18 +1057,16 @@ Promise.all([
       thumb.className = "zoom-slider-thumb";
       track.appendChild(fill);
       track.appendChild(thumb);
-      container.appendChild(track);
+      zoomContainer.appendChild(track);
 
-      // − button
       const btnMinus = document.createElement("button");
-      btnMinus.textContent = "−";
+      btnMinus.textContent = "\u2212";
       btnMinus.title = "Zoom out";
-      container.appendChild(btnMinus);
+      zoomContainer.appendChild(btnMinus);
 
-      // Zoom level readout
       const readout = document.createElement("div");
       readout.className = "zoom-level";
-      container.appendChild(readout);
+      zoomContainer.appendChild(readout);
 
       function updateSlider() {
         const zoom = map.getZoom();
@@ -1108,13 +1087,11 @@ Promise.all([
       }
 
       map.on("zoomend", updateSlider);
-      // Initial update after a tick (track needs to be in DOM)
       setTimeout(updateSlider, 50);
 
       btnPlus.addEventListener("click", () => map.zoomIn());
       btnMinus.addEventListener("click", () => map.zoomOut());
 
-      // Click on track to set zoom
       track.addEventListener("click", (e) => {
         const rect = track.getBoundingClientRect();
         const isHorizontal = rect.width > rect.height;
@@ -1125,13 +1102,43 @@ Promise.all([
         map.setZoom(Math.round(zoom));
       });
 
-      L.DomEvent.disableClickPropagation(container);
-      L.DomEvent.disableScrollPropagation(container);
-      return container;
+      div.appendChild(zoomContainer);
+
+      // On mobile, clone zoom bar to body so it's outside the legend
+      const mobileZoom = zoomContainer.cloneNode(true);
+      mobileZoom.classList.add("zoom-control-mobile");
+      document.body.appendChild(mobileZoom);
+      // Wire up cloned buttons
+      const mButtons = mobileZoom.querySelectorAll("button");
+      mButtons[0].addEventListener("click", () => map.zoomIn());
+      mButtons[1].addEventListener("click", () => map.zoomOut());
+      const mTrack = mobileZoom.querySelector(".zoom-slider-track");
+      const mFill = mobileZoom.querySelector(".zoom-slider-fill");
+      const mThumb = mobileZoom.querySelector(".zoom-slider-thumb");
+      mTrack.addEventListener("click", (e) => {
+        const rect = mTrack.getBoundingClientRect();
+        const pct = (e.clientX - rect.left) / rect.width;
+        map.setZoom(Math.round(minZoom + pct * (maxZoom - minZoom)));
+      });
+      function updateMobileSlider() {
+        const pct = (map.getZoom() - minZoom) / (maxZoom - minZoom);
+        mFill.style.width = (pct * 100) + "%";
+        mFill.style.height = "100%";
+        mThumb.style.left = (pct * mTrack.offsetWidth) + "px";
+        mThumb.style.bottom = "50%";
+      }
+      map.on("zoomend", updateMobileSlider);
+      setTimeout(updateMobileSlider, 100);
+      L.DomEvent.disableClickPropagation(mobileZoom);
+
+      // Prevent map interactions when clicking control
+      L.DomEvent.disableClickPropagation(div);
+      L.DomEvent.disableScrollPropagation(div);
+      return div;
     },
   });
 
-  map.addControl(new ZoomSlider());
+  map.addControl(new ToggleControl());
 
   // ── Zoom-dependent label visibility ─────────────────────────────
   function updateLabelVisibility() {
