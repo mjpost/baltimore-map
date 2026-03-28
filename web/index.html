@@ -938,8 +938,6 @@ Promise.all([
         e.stopPropagation();
         div.classList.toggle("sheet-closed");
       });
-      // Close sheet when tapping the map on mobile
-      map.on("click", () => div.classList.add("sheet-closed"));
 
       div.innerHTML = '<strong class="layers-title"><span class="mode-toggle-label-full">Clicking selects</span><span class="mode-toggle-label-short">Tapping selects</span></strong>';
 
