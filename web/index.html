@@ -625,18 +625,9 @@ const STYLES = {
 };
 
 // ── Map setup ───────────────────────────────────────────────────────
-// Single shared canvas renderer: skips redraws mid-animation, only
-// repaints once the zoom/pan settles.
-const sharedCanvas = L.canvas({
-  padding: 0.3,
-  updateWhenZooming: false,
-  updateWhenIdle: true,
-});
-
 const map = L.map("map", {
   zoomControl: false,
   attributionControl: false,
-  renderer: sharedCanvas,
   scrollWheelZoom: true,
   zoomSnap: 1,
   zoomDelta: 1,
@@ -663,11 +654,12 @@ function geojsonCentroid(feature) {
 }
 
 // ── Highlight helpers ───────────────────────────────────────────────
+let hoveredNeighborhood = null;
+
 function highlightNeighborhood(name) {
   const entry = neighborhoodIndex[name];
   if (!entry) return;
   entry.layer.setStyle(STYLES.neighborhoodHighlight);
-  entry.layer.bringToFront();
   if (entry.marker) {
     entry.marker.getElement()?.classList.add("neighborhood-label-active");
   }
@@ -679,6 +671,60 @@ function resetNeighborhood(name) {
   entry.layer.setStyle(STYLES.neighborhood);
   if (entry.marker) {
     entry.marker.getElement()?.classList.remove("neighborhood-label-active");
+  }
+}
+
+function hoverNeighborhood(name) {
+  if (hoveredNeighborhood === name) return;
+  if (hoveredNeighborhood) resetNeighborhood(hoveredNeighborhood);
+  hoveredNeighborhood = name;
+  if (name) highlightNeighborhood(name);
+}
+
+function unhoverNeighborhood(name) {
+  if (hoveredNeighborhood !== name) return;
+  resetNeighborhood(name);
+  hoveredNeighborhood = null;
+}
+
+// ── District hover helpers ──────────────────────────────────────────
+let hoveredDistrict = null;
+
+function highlightDistrictLayer(name) {
+  const entry = districtIndex[name];
+  if (!entry) return;
+  entry.layer.setStyle({ color: COLORS.highlight, weight: 4, fillOpacity: 0.45, opacity: 1 });
+}
+
+function resetDistrictLayer(name) {
+  const entry = districtIndex[name];
+  if (!entry) return;
+  entry.layer.setStyle({
+    ...STYLES.district,
+    fillColor: DISTRICT_FILLS[name] || "#eeeeee",
+  });
+}
+
+// ── Unified hover dispatch ──────────────────────────────────────────
+function handleHover(neighborhoodName, districtName) {
+  if (selectionMode === "neighborhoods" && neighborhoodName) {
+    hoverNeighborhood(neighborhoodName);
+  } else if (selectionMode === "districts" && districtName) {
+    if (hoveredDistrict === districtName) return;
+    if (hoveredDistrict) resetDistrictLayer(hoveredDistrict);
+    hoveredDistrict = districtName;
+    highlightDistrictLayer(districtName);
+  }
+}
+
+function clearHover() {
+  if (hoveredNeighborhood) {
+    resetNeighborhood(hoveredNeighborhood);
+    hoveredNeighborhood = null;
+  }
+  if (hoveredDistrict) {
+    resetDistrictLayer(hoveredDistrict);
+    hoveredDistrict = null;
   }
 }
 
@@ -713,13 +759,14 @@ Promise.all([
       neighborhoodIndex[name] = { layer, marker: null };
 
       // Hover on polygon
-      layer.on("mouseover", () => highlightNeighborhood(name));
-      layer.on("mouseout", () => resetNeighborhood(name));
+      layer.on("mouseover", () => handleHover(name, null));
+      layer.on("mouseout", () => clearHover());
 
-      // Click on polygon → select if in neighborhoods mode
+      // Click on polygon
       layer.on("click", () => {
-        if (selectionMode !== "neighborhoods") return;
-        if (window.selectNeighborhood) window.selectNeighborhood(name);
+        if (selectionMode === "neighborhoods") {
+          if (window.selectNeighborhood) window.selectNeighborhood(name);
+        }
       });
 
       // Create label marker at centroid
@@ -737,9 +784,9 @@ Promise.all([
         interactive: true,
       });
 
-      // Hover on label → highlight polygon
-      marker.on("mouseover", () => highlightNeighborhood(name));
-      marker.on("mouseout", () => resetNeighborhood(name));
+      // Hover on label
+      marker.on("mouseover", () => handleHover(name, null));
+      marker.on("mouseout", () => clearHover());
 
       neighborhoodIndex[name].marker = marker;
       neighborhoodLabelsLayer.addLayer(marker);
@@ -760,10 +807,15 @@ Promise.all([
 
       districtIndex[name] = { layer };
 
-      // Click to highlight district (only in districts mode)
+      // Hover on district polygon
+      layer.on("mouseover", () => handleHover(null, name));
+      layer.on("mouseout", () => clearHover());
+
+      // Click to highlight district
       layer.on("click", () => {
-        if (selectionMode !== "districts") return;
-        selectDistrict(name);
+        if (selectionMode === "districts") {
+          selectDistrict(name);
+        }
       });
 
       const [lat, lng] = geojsonCentroid(feature);
@@ -789,10 +841,21 @@ Promise.all([
   // ── Add default layers ──────────────────────────────────────────
   basemap.addTo(map);
   parksLayer.addTo(map);
-  neighborhoodsLayer.addTo(map);
-  neighborhoodLabelsLayer.addTo(map);
   districtsLayer.addTo(map);
   districtLabelsLayer.addTo(map);
+  neighborhoodsLayer.addTo(map);
+  neighborhoodLabelsLayer.addTo(map);
+
+  // ── Bring the active mode's layer to front ───────────────────────
+  function updateLayerOrder() {
+    clearHover();
+    if (selectionMode === "neighborhoods") {
+      neighborhoodsLayer.bringToFront();
+    } else {
+      districtsLayer.bringToFront();
+    }
+  }
+  updateLayerOrder();
 
   // ── Fit bounds to neighborhoods ─────────────────────────────────
   map.fitBounds(neighborhoodsLayer.getBounds());
@@ -947,6 +1010,7 @@ Promise.all([
           btnDistricts.classList.add("active");
           btnNeighborhoods.classList.remove("active");
         }
+        updateLayerOrder();
       }
 
       btnNeighborhoods.addEventListener("click", () => setMode("neighborhoods"));
