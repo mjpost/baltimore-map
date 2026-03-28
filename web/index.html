@@ -674,9 +674,26 @@ const map = L.map("map", {
 const neighborhoodIndex = {};
 const districtIndex = {};  // AREA_NAME → { layer }
 let selectedDistrict = null;  // currently clicked district
+let selectedNeighborhood = null;  // currently clicked neighborhood
 
 // ── Selection mode (set by legend toggle) ───────────────────────────
 let selectionMode = "neighborhoods";
+
+// ── URL state helpers ───────────────────────────────────────────────
+function updateURL() {
+  const c = map.getCenter();
+  const params = new URLSearchParams();
+  params.set("lat", c.lat.toFixed(5));
+  params.set("lng", c.lng.toFixed(5));
+  params.set("z", map.getZoom());
+  if (selectionMode !== "neighborhoods") params.set("mode", selectionMode);
+  if (selectedNeighborhood) params.set("n", selectedNeighborhood);
+  if (selectedDistrict) params.set("d", selectedDistrict);
+  history.replaceState(null, "", "?" + params.toString());
+}
+function getURLParams() {
+  return new URLSearchParams(window.location.search);
+}
 
 // ── Utility: polygon centroid (lat/lng) ─────────────────────────────
 function geojsonCentroid(feature) {
@@ -892,8 +909,16 @@ Promise.all([
   }
   updateLayerOrder();
 
-  // ── Fit bounds to neighborhoods ─────────────────────────────────
-  map.fitBounds(neighborhoodsLayer.getBounds());
+  // ── Restore view from URL or fit bounds ────────────────────────
+  const _params = getURLParams();
+  if (_params.has("lat") && _params.has("lng") && _params.has("z")) {
+    map.setView([parseFloat(_params.get("lat")), parseFloat(_params.get("lng"))], parseInt(_params.get("z")));
+  } else {
+    map.fitBounds(neighborhoodsLayer.getBounds());
+  }
+
+  // Track map movement in URL
+  map.on("moveend", updateURL);
 
   // ── Layer control ───────────────────────────────────────────────
   const overlays = {
@@ -1047,6 +1072,7 @@ Promise.all([
           btnNeighborhoods.classList.remove("active");
         }
         updateLayerOrder();
+        updateURL();
       }
 
       btnNeighborhoods.addEventListener("click", () => setMode("neighborhoods"));
@@ -1071,6 +1097,8 @@ Promise.all([
 
       // Neighborhood selection from map click
       window.selectNeighborhood = function(name) {
+        selectedNeighborhood = name;
+        selectedDistrict = null;
         input.value = name;
         dropdown.classList.remove("open");
         highlightSearchResults([name]);
@@ -1100,6 +1128,7 @@ Promise.all([
         }
         repInfo.innerHTML = html;
         repInfo.classList.add("visible");
+        updateURL();
       };
 
       div.appendChild(modeContainer);
@@ -1149,6 +1178,7 @@ Promise.all([
 
       // Shared select/deselect function
       window.selectDistrict = function(num) {
+        selectedNeighborhood = null;
         // Deselect previous
         if (selectedDistrict) {
           const prev = districtIndex[selectedDistrict];
@@ -1171,6 +1201,7 @@ Promise.all([
           selectedDistrict = null;
           if (legendSwatches[num]) legendSwatches[num].textContent = "";
           repInfo.classList.remove("visible");
+          updateURL();
           return;
         }
 
@@ -1206,7 +1237,18 @@ Promise.all([
             '<div>' + rep.phone + '</div>';
           repInfo.classList.add("visible");
         }
+        updateURL();
       };
+
+      // ── Restore selection state from URL ─────────────────────────
+      const _initParams = getURLParams();
+      if (_initParams.has("mode")) setMode(_initParams.get("mode"));
+      if (_initParams.has("n") && neighborhoodIndex[_initParams.get("n")]) {
+        window.selectNeighborhood(_initParams.get("n"));
+      }
+      if (_initParams.has("d")) {
+        window.selectDistrict(_initParams.get("d"));
+      }
 
       // Append search box and district legend after mode toggle
       div.appendChild(searchWrapper);
